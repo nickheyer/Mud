@@ -10,14 +10,34 @@ function showScreen(screenId) {
 }
 
 async function installMods(files) {
-
   document.querySelector("#install-status").textContent = await invoke('install_mods', { files });
   showScreen("completion-screen");
+}
+
+async function syncRepo() {
+  const repoUrl = "https://github.com/nickheyer/Mud.Community.git";
+  const localPath = await open({
+    directory: true,
+    title: 'Choose a directory to store the repository',
+  });
+
+  if (localPath) {
+    document.querySelector("#sync-status").textContent = "Syncing with the community repository...";
+    const message = await invoke('sync_with_repo', { repoUrl, localPath });
+    document.querySelector("#sync-status").textContent = message;
+    showScreen("setup-screen");
+  } else {
+    console.log('Repository sync was cancelled or failed');
+  }
 }
 
 window.addEventListener("DOMContentLoaded", () => {
   document.querySelector("#start-setup").addEventListener("click", () => {
     showScreen("setup-screen");
+  });
+
+  document.querySelector("#sync-repo-button").addEventListener("click", () => {
+    syncRepo();
   });
 
   document.querySelector("#setup-form").addEventListener("submit", async (e) => {
