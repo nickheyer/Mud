@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta name="htmx-config" content='{"selfRequestsOnly":false}' />
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mud</title>
+    <script type="module" src="/main.js" defer></script>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Welcome to Mud Mod Manager</h1>
+
+      <div id="welcome-screen" class="screen">
+        <div class="row">
+          <a href="https://github.com/nickheyer/Mud" target="_blank">
+            <img src="/assets/mud.svg" class="logo mud" alt="Mud logo" />
+          </a>
+        </div>
+        <p>Click below to start modding Baldur's Gate 3!</p>
+        <button id="start-setup">Start Setup</button>
+        <button id="sync-repo-button">Sync with Community Repository</button>
+        <p id="sync-status"></p>
+      </div>
+
+      <div id="setup-screen" class="screen hidden">
+        <h2>Setup Baldur's Gate 3</h2>
+        <p>Let's get your game ready for modding.</p>
+        <form id="setup-form">
+          <label for="mod-directory">Mod Directory</label>
+          <input id="mod-directory" placeholder="Enter mod directory path..." />
+          <button type="submit">Setup Game</button>
+        </form>
+        <p id="setup-status"></p>
+      </div>
+
+      <div id="mod-install-screen" class="screen hidden">
+        <h2>Install Mods</h2>
+        <div id="drop-area">
+          <p>Drag and drop mod files here, or</p>
+          <input type="file" id="mod-file-input" multiple accept=".zip,.rar,.7z" style="display:none">
+          <button id="browse-files">Browse Files</button>
+        </div>
+        <ul id="file-list"></ul>
+        <button id="install-mods">Install Mods</button>
+        <p id="install-status"></p>
+      </div>
+
+      <div id="completion-screen" class="screen hidden">
+        <h2>Modding Complete!</h2>
+        <p id="completion-message">Your mods have been successfully installed!</p>
+        <button id="finish-setup">Finish Setup</button>
+      </div>
+    </div>
+  </body>
+</html>

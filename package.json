@@ -10,5 +10,9 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1"
+  },
+  "dependencies": {
+    "htmx.org": "^1.9.12",
+    "tauri-plugin-htmx": "^1.0.1"
   }
 }
