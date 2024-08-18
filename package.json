@@ -9,21 +9,23 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "dev-build": "NO_STRIP=true tauri build"
   },
   "license": "MIT",
   "dependencies": {
-    "@tauri-apps/api": ">=2.0.0-rc.0",
+    "@tauri-apps/api": "^2.0.0-rc.1",
+    "@tauri-apps/plugin-process": "^2.0.0-rc.0",
     "@tauri-apps/plugin-shell": ">=2.0.0-rc.0"
   },
   "devDependencies": {
-    "@sveltejs/adapter-static": "^3.0.1",
+    "@sveltejs/adapter-static": "^3.0.4",
     "@sveltejs/kit": "^2.0.0",
     "@sveltejs/vite-plugin-svelte": "^3.0.0",
+    "@tauri-apps/cli": ">=2.0.0-rc.0",
     "svelte": "^4.2.7",
     "svelte-check": "^3.6.0",
     "typescript": "^5.0.0",
-    "vite": "^5.0.3",
-    "@tauri-apps/cli": ">=2.0.0-rc.0"
+    "vite": "^5.0.3"
   }
 }

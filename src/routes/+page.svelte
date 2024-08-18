@@ -1,47 +1,136 @@
 <script>
   import { invoke } from "@tauri-apps/api/core";
+  import { onMount } from 'svelte';
+  import { exit, relaunch } from '@tauri-apps/plugin-process';
 
-  let name = "";
-  let greetMsg = "";
+  let syncStatus = "Not synced";
+  $: recentActivity = [];
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    greetMsg = await invoke("greet", { name });
+  // Function to sync the repo
+  async function syncRepo() {
+    try {
+      syncStatus = "Syncing...";
+      // Replace 'sync_repo' with the actual Tauri command for syncing
+      //await invoke("sync_repo");
+      syncStatus = "Sync successful!";
+      // Refresh recent activity or any other data after sync
+      recentActivity = [
+        ...recentActivity,
+        { time: new Date().toLocaleString(), message: "Repo synced" }
+      ];
+      console.log(recentActivity.length);
+    } catch (error) {
+      syncStatus = `Sync failed: ${error.message}`;
+    }
   }
+
+  async function handleExit(event) {
+    event.preventDefault(); // Prevent the default behavior of the <a> tag
+    await exit(0);
+  }
+
+  // On mount, we check the sync status from the backend
+  onMount(async () => {
+    const isSynced = await invoke('get_sync_status');
+    syncStatus = isSynced ? 'Synced' : 'Not synced';
+  });
 </script>
 
-<div class="container">
-  <h1>Welcome to Tauri!</h1>
+<!-- Top Navigation Bar -->
+<nav>
+  <ul>
+    <li><a href="/">Home</a></li>
+    <li><a href="/games">Games</a></li>
+    <li><a href="/settings">Settings</a></li>
+    <li><a href="/sync">Sync</a></li>
+    <li><a href="{null}" target="_blank" on:click={handleExit}>Exit</a></li>
+  </ul>
+</nav>
 
-  <div class="row">
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="/vite.svg" class="logo vite" alt="Vite Logo" />
-    </a>
-    <a href="https://tauri.app" target="_blank">
-      <img src="/tauri.svg" class="logo tauri" alt="Tauri Logo" />
-    </a>
-    <a href="https://kit.svelte.dev" target="_blank">
-      <img src="/svelte.svg" class="logo svelte-kit" alt="SvelteKit Logo" />
-    </a>
+<!-- Main Content -->
+<div class="container">
+  <h1>Welcome to Mud!</h1>
+  <p>Your universal mod manager for various games.</p>
+
+  <!-- Sync Status -->
+  <div class="sync-status">
+    <p><strong>Sync Status:</strong> {syncStatus}</p>
+    <button on:click={syncRepo}>Sync Now</button>
   </div>
 
-  <p>Click on the Tauri, Vite, and SvelteKit logos to learn more.</p>
+  <!-- Recent Activity -->
+  <div class="recent-activity">
+    <h2>Recent Activity</h2>
+    {#if recentActivity.length > 0}
+      <ul>
+        {#each recentActivity as activity}
+          <li>{activity.time}: {activity.message}</li>
+        {/each}
+      </ul>
+    {:else}
+      <p>No recent activity.</p>
+    {/if}
+  </div>
 
-  <form class="row" on:submit|preventDefault={greet}>
-    <input id="greet-input" placeholder="Enter a name..." bind:value={name} />
-    <button type="submit">Greet</button>
-  </form>
-
-  <p>{greetMsg}</p>
 </div>
 
 <style>
-  .logo.vite:hover {
-    filter: drop-shadow(0 0 2em #747bff);
+  nav ul {
+    display: flex;
+    list-style-type: none;
+    padding: 0;
+    background-color: #333;
+    justify-content: space-around;
   }
 
-  .logo.svelte-kit:hover {
-    filter: drop-shadow(0 0 2em #ff3e00);
+  nav ul li {
+    margin: 0;
+  }
+
+  nav ul li a {
+    display: block;
+    padding: 14px 20px;
+    color: white;
+    text-decoration: none;
+  }
+
+  nav ul li a:hover {
+    background-color: #575757;
+  }
+
+  .container {
+    margin: 0;
+    padding-top: 10vh;
+    text-align: center;
+  }
+
+  .sync-status, .recent-activity {
+    margin: 20px 0;
+  }
+
+  .sync-status p, .recent-activity p {
+    margin: 0;
+  }
+
+  button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px #2b7a3b;
+  }
+
+  button:hover {
+    background-color: #45a049;
+  }
+
+  button:active {
+    box-shadow: 0 2px #2b7a3b;
+    transform: translateY(2px);
+  }
+
+  .logo:hover {
+    filter: drop-shadow(0 0 2em #747bff);
   }
 
   :root {
@@ -74,10 +163,6 @@
     padding: 1.5em;
     will-change: filter;
     transition: 0.75s;
-  }
-
-  .logo.tauri:hover {
-    filter: drop-shadow(0 0 2em #24c8db);
   }
 
   .row {
@@ -130,10 +215,6 @@
     outline: none;
   }
 
-  #greet-input {
-    margin-right: 5px;
-  }
-
   @media (prefers-color-scheme: dark) {
     :root {
       color: #f6f6f6;
@@ -153,4 +234,5 @@
       background-color: #0f0f0f69;
     }
   }
+
 </style>
