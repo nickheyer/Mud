@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch",
-    "tauri": "tauri",
+    "tauri": "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS='--ignore-gpu-blacklist' tauri",
     "dev-build": "NO_STRIP=true tauri build"
   },
   "license": "MIT",

@@ -129,9 +129,9 @@
     transform: translateY(2px);
   }
 
-  .logo:hover {
+  /* .logo:hover {
     filter: drop-shadow(0 0 2em #747bff);
-  }
+  } */
 
   :root {
     font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
@@ -158,7 +158,7 @@
     text-align: center;
   }
 
-  .logo {
+  /* .logo {
     height: 6em;
     padding: 1.5em;
     will-change: filter;
@@ -168,7 +168,7 @@
   .row {
     display: flex;
     justify-content: center;
-  }
+  } */
 
   a {
     font-weight: 500;
@@ -184,7 +184,7 @@
     text-align: center;
   }
 
-  input,
+  /* input, */
   button {
     border-radius: 8px;
     border: 1px solid transparent;
@@ -210,7 +210,7 @@
     background-color: #e8e8e8;
   }
 
-  input,
+  /* input, */
   button {
     outline: none;
   }
@@ -225,7 +225,7 @@
       color: #24c8db;
     }
 
-    input,
+    /* input, */
     button {
       color: #ffffff;
       background-color: #0f0f0f98;
