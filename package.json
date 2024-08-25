@@ -9,20 +9,24 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch",
-    "tauri": "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS='--ignore-gpu-blacklist' tauri",
-    "dev-build": "NO_STRIP=true tauri build"
+    "tauri": "tauri",
+    "dev-build": "NO_STRIP=true tauri build",
+    "start": "rm -rf \"/home/nick/.cache/mud\" && tauri dev"
   },
   "license": "MIT",
   "dependencies": {
     "@tauri-apps/api": "^2.0.0-rc.1",
     "@tauri-apps/plugin-process": "^2.0.0-rc.0",
-    "@tauri-apps/plugin-shell": ">=2.0.0-rc.0"
+    "@tauri-apps/plugin-shell": ">=2.0.0-rc.0",
+    "lodash": "^4.17.21",
+    "marked": "^14.0.0"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.4",
     "@sveltejs/kit": "^2.0.0",
     "@sveltejs/vite-plugin-svelte": "^3.0.0",
     "@tauri-apps/cli": ">=2.0.0-rc.0",
+    "lightningcss": "^1.26.0",
     "svelte": "^4.2.7",
     "svelte-check": "^3.6.0",
     "typescript": "^5.0.0",

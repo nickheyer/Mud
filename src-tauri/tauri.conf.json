@@ -4,8 +4,8 @@
   "identifier": "com.mud.app",
   "build": {
     "beforeDevCommand": "npm run dev",
-    "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:5173",
     "frontendDist": "../build"
   },
   "app": {
@@ -15,15 +15,12 @@
         "title": "mud",
         "width": 800,
         "height": 600,
-        "visible": false
-      },
-      {
-        "label": "mudsplash",
-        "url": "/splash"
+        "visible": true
       }
     ],
     "security": {
-      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: https://asset.localhost"
+      "csp": null,
+      "dangerousDisableAssetCspModification": true
     }
   },
   "bundle": {

@@ -15,10 +15,13 @@ crate-type = ["lib", "cdylib", "staticlib"]
 tauri-build = { version = "2.0.0-rc", features = [] }
 
 [dependencies]
+duckscript = "0.8"
 tauri = { version = "2.0.0-rc", features = [] }
 tauri-plugin-shell = "2.0.0-rc"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = "1.39.3"
 tauri-plugin-process = "2.0.0-rc.0"
+duckscriptsdk = "0.9.3"
+gag = "1.0.0"
 

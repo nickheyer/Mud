@@ -3,6 +3,7 @@ name: publish
 on:
   push:
     branches:
+      - svelte
       - test
 jobs:
   publish-tauri:

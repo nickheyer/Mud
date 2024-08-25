@@ -3,7 +3,7 @@ name: "publish"
 on:
   workflow_dispatch:
   push:
-    branches: [test, svelte]
+    branches: [test]
 concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true

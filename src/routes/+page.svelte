@@ -1,64 +1,74 @@
 <script>
   import { invoke } from "@tauri-apps/api/core";
-  import { onMount } from 'svelte';
-  import { exit, relaunch } from '@tauri-apps/plugin-process';
+  import { onMount } from "svelte";
+  import { exit } from "@tauri-apps/plugin-process";
+  import _ from 'lodash';
+  import { marked } from 'marked';
 
-  let syncStatus = "Not synced";
+  $: syncStatus = "Not synced";
   $: recentActivity = [];
+  $: scriptInput = "";
+  $: scriptOutput = "";
 
-  // Function to sync the repo
   async function syncRepo() {
+    syncStatus = "Syncing...";
     try {
-      syncStatus = "Syncing...";
-      // Replace 'sync_repo' with the actual Tauri command for syncing
-      //await invoke("sync_repo");
+      await invoke("get_sync_status");
       syncStatus = "Sync successful!";
-      // Refresh recent activity or any other data after sync
       recentActivity = [
         ...recentActivity,
-        { time: new Date().toLocaleString(), message: "Repo synced" }
+        { time: new Date().toLocaleString(), message: "Repo synced" },
       ];
-      console.log(recentActivity.length);
     } catch (error) {
       syncStatus = `Sync failed: ${error.message}`;
     }
   }
 
+  async function runScript() {
+    try {
+      const scriptContent = `${scriptInput}`;
+      const output = await invoke('run_script', { scriptContent });
+      scriptOutput = _.trim(output, '"')
+        .replace(/\\n/g, '\n');
+    } catch (error) {
+      scriptOutput = JSON.stringify(error, 4, 2);
+      console.error("Error running script:", error);
+    }
+  }
+
   async function handleExit(event) {
-    event.preventDefault(); // Prevent the default behavior of the <a> tag
+    event.preventDefault();
     await exit(0);
   }
 
-  // On mount, we check the sync status from the backend
   onMount(async () => {
-    const isSynced = await invoke('get_sync_status');
-    syncStatus = isSynced ? 'Synced' : 'Not synced';
+    const isSynced = await invoke("get_sync_status");
+    syncStatus = isSynced ? "Synced" : "Not synced";
   });
 </script>
 
-<!-- Top Navigation Bar -->
+
 <nav>
   <ul>
     <li><a href="/">Home</a></li>
     <li><a href="/games">Games</a></li>
     <li><a href="/settings">Settings</a></li>
     <li><a href="/sync">Sync</a></li>
-    <li><a href="{null}" target="_blank" on:click={handleExit}>Exit</a></li>
+    <li><button class="link-button" on:click={handleExit}>Exit</button></li>
   </ul>
 </nav>
 
-<!-- Main Content -->
 <div class="container">
+  <img src="/Mud_simple_transparent_gw.svg" alt="Mud Logo" class="logo" />
+  
   <h1>Welcome to Mud!</h1>
   <p>Your universal mod manager for various games.</p>
 
-  <!-- Sync Status -->
   <div class="sync-status">
     <p><strong>Sync Status:</strong> {syncStatus}</p>
     <button on:click={syncRepo}>Sync Now</button>
   </div>
 
-  <!-- Recent Activity -->
   <div class="recent-activity">
     <h2>Recent Activity</h2>
     {#if recentActivity.length > 0}
@@ -72,167 +82,173 @@
     {/if}
   </div>
 
+  <!-- REPL Interface -->
+  <div class="repl-interface">
+    <h2>Mudscript Repl</h2>
+    <textarea class="repl-input repl" bind:value={scriptInput} placeholder="Type your script here..." rows="5"></textarea>
+    <br>
+    <textarea class="repl-output repl" bind:value={scriptOutput} readonly placeholder="Your script output goes here..." rows="5"></textarea>
+    <br>
+    <button on:click={runScript}>Run Script</button>
+  </div>
 </div>
 
 <style>
-  nav ul {
-    display: flex;
-    list-style-type: none;
-    padding: 0;
-    background-color: #333;
-    justify-content: space-around;
+:root {
+  font-family: 'Inter', 'Avenir', 'Helvetica', 'Arial', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #f6f6f6;
+  background-color: #1e1e1e;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+nav {
+  background-color: #121212;
+  padding: 10px 0;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+nav ul {
+  display: flex;
+  justify-content: center;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+nav ul li {
+  margin: 0 15px;
+  display: flex;
+  justify-content: start;
+}
+
+nav ul li a,
+nav ul li .link-button {
+  color: #f6f6f6;
+  text-decoration: none;
+  font-size: 1.2rem;
+  padding: 10px 15px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+nav ul li a:hover,
+nav ul li .link-button:hover {
+  background-color: #24c8db;
+  color: #ffffff;
+  border-radius: 5px;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.logo {
+  width: 150px;
+  height: auto;
+  margin-bottom: 20px;
+  animation: logo-spin infinite 20s linear;
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
   }
-
-  nav ul li {
-    margin: 0;
+  to {
+    transform: rotate(360deg);
   }
+}
 
-  nav ul li a {
-    display: block;
-    padding: 14px 20px;
-    color: white;
-    text-decoration: none;
-  }
+h1 {
+  font-size: 2.5rem;
+  margin: 1rem 0;
+  color: #24c8db;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
 
-  nav ul li a:hover {
-    background-color: #575757;
-  }
+.sync-status,
+.recent-activity,
+.repl-interface {
+  background-color: #333;
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
 
-  .container {
-    margin: 0;
-    padding-top: 10vh;
-    text-align: center;
-  }
+.sync-status p,
+.recent-activity p,
+.repl-interface h2 {
+  margin: 0 0 10px;
+}
 
-  .sync-status, .recent-activity {
-    margin: 20px 0;
-  }
+button:not(.link-button) {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.8em 1.5em;
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #24c8db;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
 
-  .sync-status p, .recent-activity p {
-    margin: 0;
-  }
+button:not(.link-button):hover {
+  background-color: #1a9caf;
+  transform: translateY(-2px);
+}
 
-  button {
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    box-shadow: 0 4px #2b7a3b;
-  }
+button:not(.link-button):active {
+  background-color: #177e92;
+  transform: translateY(0);
+}
 
-  button:hover {
-    background-color: #45a049;
-  }
+.repl-interface {
+  margin-top: 20px;
+}
 
-  button:active {
-    box-shadow: 0 2px #2b7a3b;
-    transform: translateY(2px);
-  }
+textarea {
+  margin: auto;
+  width: auto;
+  min-width: 60%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  border: 1px solid #555;
+  background-color: #222;
+  color: #f6f6f6;
+  resize: vertical;
+}
 
-  /* .logo:hover {
-    filter: drop-shadow(0 0 2em #747bff);
-  } */
+.repl-output {
+  white-space: pre-wrap;
+}
 
-  :root {
-    font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-    font-size: 16px;
-    line-height: 24px;
-    font-weight: 400;
+a, .link-button {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
 
-    color: #0f0f0f;
-    background-color: #f6f6f6;
-
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    -webkit-text-size-adjust: 100%;
-  }
-
-  .container {
-    margin: 0;
-    padding-top: 10vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    text-align: center;
-  }
-
-  /* .logo {
-    height: 6em;
-    padding: 1.5em;
-    will-change: filter;
-    transition: 0.75s;
-  }
-
-  .row {
-    display: flex;
-    justify-content: center;
-  } */
-
-  a {
-    font-weight: 500;
-    color: #646cff;
-    text-decoration: inherit;
-  }
-
-  a:hover {
-    color: #535bf2;
-  }
-
-  h1 {
-    text-align: center;
-  }
-
-  /* input, */
-  button {
-    border-radius: 8px;
-    border: 1px solid transparent;
-    padding: 0.6em 1.2em;
-    font-size: 1em;
-    font-weight: 500;
-    font-family: inherit;
-    color: #0f0f0f;
-    background-color: #ffffff;
-    transition: border-color 0.25s;
-    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
-  }
-
-  button {
-    cursor: pointer;
-  }
-
-  button:hover {
-    border-color: #396cd8;
-  }
-  button:active {
-    border-color: #396cd8;
-    background-color: #e8e8e8;
-  }
-
-  /* input, */
-  button {
-    outline: none;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      color: #f6f6f6;
-      background-color: #2f2f2f;
-    }
-
-    a:hover {
-      color: #24c8db;
-    }
-
-    /* input, */
-    button {
-      color: #ffffff;
-      background-color: #0f0f0f98;
-    }
-    button:active {
-      background-color: #0f0f0f69;
-    }
-  }
+a:hover, .link-button:hover {
+  color: #24c8db;
+}
 
 </style>
+
