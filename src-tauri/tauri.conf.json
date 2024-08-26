@@ -13,9 +13,9 @@
       {
         "label": "main",
         "title": "mud",
-        "width": 800,
-        "height": 600,
-        "visible": true
+        "width": 1080,
+        "height": 900,
+        "resizable": false
       }
     ],
     "security": {

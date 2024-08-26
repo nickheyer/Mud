@@ -11,7 +11,7 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch",
     "tauri": "tauri",
     "dev-build": "NO_STRIP=true tauri build",
-    "start": "rm -rf \"/home/nick/.cache/mud\" && tauri dev"
+    "start": "rm -rf \"~/.cache/mud\" && tauri dev"
   },
   "license": "MIT",
   "dependencies": {

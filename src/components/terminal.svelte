@@ -23,7 +23,7 @@
             currentInput = "";
         }
         autoSizeTextarea();
-    }
+  }
 
   // Keypress event handler for the terminal
   function handleKeyPress(event) {
@@ -67,17 +67,35 @@
     }
   }
 
+  // Focus terminal, used on load and mouseover
+  function focusInput() {
+    const terminalDiv = document.getElementById("term-input");
+    terminalDiv.focus();
+  }
+
   // Watch `currentInput` and adjust the textarea size accordingly
   $: {
     autoSizeTextarea();
   }
+  
+  onMount(async () => {
+    focusInput()
+  });
 </script>
 
 <div class="container">
-  <img src="/Mud_512x218_txt_blk.svg" alt="Mud Text Logo" class="logo" />
+  
 
   <!-- Terminal Interface -->
-  <div id="terminal" class="repl-interface">
+  <div
+    id="terminal"
+    class="repl-interface"
+    on:mouseover={focusInput}
+    on:focus={null}
+    on:blur={null}
+    role="group"
+  >
+    <img src="/Mud_512x218_txt_blk.svg" alt="Mud Text Logo" class="mud-overlay" />
     <pre>{fullTerminalContent}</pre>
     <label for="term-input" style="display: none;">Input:</label>
     <input
@@ -92,16 +110,21 @@
 
 <style>
   .container {
+    position: relative;
     max-width: 90%;
-    margin: 0;
-    padding: 2rem 1rem;
+    margin: 2rem 2rem;
     text-align: start;
+    
   }
 
-  .logo {
-    width: 150px;
+  .mud-overlay {
+    position: absolute;
+    top: 30px;
+    right: 0px;
+    width: 100px;
     height: auto;
-    margin-bottom: 20px;
+    opacity: 0.3;
+    pointer-events: none;
   }
 
   .repl-interface {
@@ -114,7 +137,7 @@
     font-family: monospace;
     white-space: pre-wrap;
     min-height: 300px;
-    max-height: 500px;
+    max-height: 650px;
     display: flex;
     overflow-y: scroll;
     width: 100%;
@@ -131,8 +154,8 @@
     font-family: monospace;
     padding: 0;
     margin-top: 5px;
-    font-size: 1rem !important; /* Match the font size with <pre> and terminal content */
-    line-height: 1.5 !important; /* Adjust line-height for better readability */
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
     resize: horizontal;
   }
 
@@ -142,7 +165,7 @@
 
   pre {
     margin: 0;
-    font-size: 1rem; /* Match the font size with textarea */
-    line-height: 1.5; /* Adjust line-height for better readability */
+    font-size: 1rem;
+    line-height: 1.5;
   }
 </style>
