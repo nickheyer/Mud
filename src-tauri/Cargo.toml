@@ -15,8 +15,8 @@ crate-type = ["lib", "cdylib", "staticlib"]
 tauri-build = { version = "2.0.0-rc", features = [] }
 
 [dependencies]
-duckscript = { git = "https://github.com/nickheyer/duckscript", branch = "master", subdir = "duckscript" }
-duckscriptsdk = { git = "https://github.com/nickheyer/duckscript", branch = "master", subdir = "duckscript_sdk" }
+duckscript = { git = "https://github.com/nickheyer/duckscript", branch = "master" }
+duckscriptsdk = { git = "https://github.com/nickheyer/duckscript", branch = "master" }
 gag = "1.0.0"
 tauri = { version = "2.0.0-rc", features = [] }
 tauri-plugin-shell = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v2" }
