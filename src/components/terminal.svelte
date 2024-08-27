@@ -103,8 +103,10 @@
 <style>
   .container {
     position: relative;
+    margin: auto;
     margin-top: 2rem;
     text-align: start;
+    overflow: hidden;
   }
 
   .mud-overlay {
@@ -126,7 +128,7 @@
     font-family: monospace;
     white-space: pre-wrap;
 
-    height: 85vh;
+    height: 80vh;
     display: flex;
     overflow-y: scroll;
     flex-direction: column;

@@ -3,7 +3,7 @@
     max-width: 800px;
     padding: 2rem 1rem;
     text-align: center;
-    align-items: center;
+    margin: auto;
   }
   
   .logo {
