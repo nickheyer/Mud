@@ -26,7 +26,6 @@
   }
 
   async function scrollDown() {
-    console.log('scrolling')
     await terminalDiv.scrollIntoView({
       behavior: 'smooth',
       block: 'end'
