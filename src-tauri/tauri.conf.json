@@ -15,7 +15,7 @@
         "title": "mud",
         "width": 1080,
         "height": 900,
-        "resizable": false
+        "resizable": true
       }
     ],
     "security": {

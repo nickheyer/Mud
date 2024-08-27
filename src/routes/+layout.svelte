@@ -1,12 +1,12 @@
 <script>
     import { exit } from "@tauri-apps/plugin-process";
-    import './global.css';
-
     async function handleExit(event) {
         event.preventDefault();
         await exit(0);
     }
 </script>
+
+<link rel="stylesheet" href="/src/routes/global.css">
 
 <nav>
     <ul>

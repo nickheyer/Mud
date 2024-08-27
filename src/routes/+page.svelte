@@ -28,6 +28,8 @@
   });
 </script>
 
+<link rel="stylesheet" href="/src/routes/main.css">
+
 <div class="container">
   <img src="/Mud_simple_transparent_gw.svg" alt="Mud Logo" class="logo" />
 
@@ -53,51 +55,3 @@
   </div>
 </div>
 
-<style>
-  .container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 2rem 1rem;
-    text-align: center;
-  }
-
-  .logo {
-    width: 150px;
-    height: auto;
-    margin-bottom: 20px;
-  }
-
-  .logo:hover {
-    animation: logo-spin infinite 20s linear;
-  }
-
-  @keyframes logo-spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  h1 {
-    font-size: 2.5rem;
-    margin: 1rem 0;
-    color: #24c8db;
-    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-  }
-
-  .sync-status,
-  .recent-activity {
-    background-color: #333;
-    padding: 20px;
-    margin: 20px 0;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  }
-
-  .sync-status p,
-  .recent-activity p {
-    margin: 0 0 10px;
-  }
-</style>

@@ -6,6 +6,7 @@
     let inputHistory = [];
     let historyIndex = -1;
     let terminalOutput = "";
+    let terminalDiv = null;
     $: currentInput = "";
     $: fullTerminalContent = terminalOutput;
 
@@ -22,16 +23,30 @@
         } finally {
             currentInput = "";
         }
-        autoSizeTextarea();
+  }
+
+  async function scrollDown() {
+    console.log('scrolling')
+    await terminalDiv.scrollIntoView({
+      behavior: 'smooth',
+      block: 'end'
+    });
   }
 
   // Keypress event handler for the terminal
-  function handleKeyPress(event) {
+  async function handleKeyPress(event) {
+    
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       inputHistory.push(currentInput);
       historyIndex = inputHistory.length;
-      runCommand(currentInput);
+      if (currentInput === 'clear') {
+        terminalOutput = '';
+        currentInput = '';
+      } else {
+        await runCommand(currentInput);
+      }
+      await scrollDown();
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
       if (historyIndex > 0) {
@@ -50,37 +65,15 @@
     }
   }
 
-  // Autosize textarea based on content
-  function autoSizeTextarea() {
-    const textarea = document.getElementById("term-input");
-    if (textarea) {
-      textarea.style.height = "auto";
-      textarea.style.height = textarea.scrollHeight + "px";
-    }
-  }
-
-  // Scroll terminal to bottom after each new output
-  $: {
-    const terminalDiv = document.getElementById("terminal");
-    if (terminalDiv) {
-      terminalDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }
-  }
-
-  // Focus terminal, used on load and mouseover
   function focusInput() {
-    const terminalDiv = document.getElementById("term-input");
     terminalDiv.focus();
-  }
-
-  // Watch `currentInput` and adjust the textarea size accordingly
-  $: {
-    autoSizeTextarea();
   }
   
   onMount(async () => {
+    terminalDiv = document.getElementById("term-input");
     focusInput()
   });
+  
 </script>
 
 <div class="container">
@@ -111,18 +104,15 @@
 <style>
   .container {
     position: relative;
-    max-width: 90%;
-    margin: 2rem 2rem;
+    margin-top: 2rem;
     text-align: start;
-    
   }
 
   .mud-overlay {
     position: absolute;
-    top: 30px;
-    right: 0px;
-    width: 100px;
-    height: auto;
+    top: 1rem;
+    right: 3rem;
+    width: 10rem;
     opacity: 0.3;
     pointer-events: none;
   }
@@ -136,13 +126,12 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     font-family: monospace;
     white-space: pre-wrap;
-    min-height: 300px;
-    max-height: 650px;
+
+    height: 85vh;
     display: flex;
     overflow-y: scroll;
-    width: 100%;
     flex-direction: column;
-    
+    margin: 0 2rem 0 2rem;
   }
 
   .term-input {
