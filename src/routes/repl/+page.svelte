@@ -1,5 +1,4 @@
 <script>
-
     import { onMount } from "svelte";
     import Terminal from "../../components/terminal.svelte";
 

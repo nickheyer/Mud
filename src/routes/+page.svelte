@@ -1,9 +1,7 @@
 <script>
   import { invoke } from "@tauri-apps/api/core";
   import { onMount } from "svelte";
-  import { exit } from "@tauri-apps/plugin-process";
   import _ from "lodash";
-  import { marked } from "marked";
 
   $: syncStatus = "Not synced";
   $: recentActivity = [];
@@ -28,7 +26,7 @@
   });
 </script>
 
-<link rel="stylesheet" href="/src/routes/main.css">
+<link rel="stylesheet" href="/main.css">
 
 <div class="container">
   <img src="/Mud_simple_transparent_gw.svg" alt="Mud Logo" class="logo" />

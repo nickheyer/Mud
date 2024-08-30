@@ -1,117 +1,94 @@
 <script>
-    import { invoke } from "@tauri-apps/api/core";
-    import { onMount } from "svelte";
-    import _ from "lodash";
 
-    let inputHistory = [];
-    let historyIndex = -1;
-    let terminalOutput = "";
-    let terminalDiv = null;
-    $: currentInput = "";
-    $: fullTerminalContent = terminalOutput;
+  import { invoke } from "@tauri-apps/api/core";
+  import { onMount } from "svelte";
+  import _ from "lodash";
 
-    // Function to run the script command
-    async function runCommand(command) {
-        try {
-            const output = await invoke("run_script", {
-                scriptContent: command,
-            });
-            terminalOutput += `> ${command}\n${_.trim(output, '"').replace(/\\n/g, "\n")}\n`;
-        } catch (error) {
-            console.error("Error running script:", error);
-            terminalOutput += `Error: ${JSON.stringify(error, null, 2)}\n`;
-        } finally {
-            currentInput = "";
-        }
+  let inputHistory = [];
+  let historyIndex = -1;
+  let terminalOutput = "";
+  let terminalCodeBlock = null;
+  let terminalDiv = null;
+  $: currentInput = "";
+  $: fullTerminalContent = terminalOutput + (currentInput ? `\n>$ ${currentInput}` : '');
+
+  async function runCommand(command) {
+      try {
+          const output = await invoke("run_script", { scriptContent: command });
+          terminalOutput += `> ${command}\n${_.trim(output, '"').replace(/\\n/g, "\n")}\n`;
+      } catch (error) {
+          console.error("Error running script:", error);
+          terminalOutput += `Error: ${JSON.stringify(error, null, 2)}\n`;
+      } finally {
+          currentInput = "";
+          historyIndex = inputHistory.length; // Reset the history index after execution
+      }
   }
 
   async function scrollDown() {
-    await terminalDiv.scrollIntoView({
-      behavior: 'smooth',
-      block: 'end'
-    });
+      await terminalDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }
 
-  // Keypress event handler for the terminal
   async function handleKeyPress(event) {
-    
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      inputHistory.push(currentInput);
-      historyIndex = inputHistory.length;
-      if (currentInput === 'clear') {
-        terminalOutput = '';
-        currentInput = '';
-      } else {
-        await runCommand(currentInput);
+      if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          inputHistory.push(currentInput);
+          historyIndex = inputHistory.length;
+          if (currentInput === 'clear') {
+              terminalOutput = '';
+              currentInput = '';
+          } else {
+              await runCommand(currentInput);
+          }
+          
+          await scrollDown();
+          
+      } else if (event.key === "ArrowUp") {
+          event.preventDefault();
+          if (historyIndex > 0) {
+              historyIndex--;
+              currentInput = inputHistory[historyIndex];
+          }
+      } else if (event.key === "ArrowDown") {
+          event.preventDefault();
+          if (historyIndex < inputHistory.length - 1) {
+              historyIndex++;
+              currentInput = inputHistory[historyIndex];
+          } else {
+              historyIndex = inputHistory.length;
+              currentInput = "";
+          }
       }
-      await scrollDown();
-    } else if (event.key === "ArrowUp") {
-      event.preventDefault();
-      if (historyIndex > 0) {
-        historyIndex--;
-        currentInput = inputHistory[historyIndex];
-      }
-    } else if (event.key === "ArrowDown") {
-      event.preventDefault();
-      if (historyIndex < inputHistory.length - 1) {
-        historyIndex++;
-        currentInput = inputHistory[historyIndex];
-      } else {
-        historyIndex = inputHistory.length;
-        currentInput = "";
-      }
-    }
   }
 
   function focusInput() {
-    terminalDiv.focus();
+      terminalDiv.focus();
   }
-  
-  onMount(async () => {
-    terminalDiv = document.getElementById("term-input");
-    focusInput()
+
+  onMount(() => {
+      terminalDiv = document.getElementById("term-input");
+      focusInput();
   });
-  
+
 </script>
-
-<div class="container">
-  
-
-  <!-- Terminal Interface -->
-  <div
-    id="terminal"
-    class="repl-interface"
-    on:mouseover={focusInput}
-    on:focus={null}
-    on:blur={null}
-    role="group"
-  >
-    <img src="/Mud_512x218_txt_blk.svg" alt="Mud Text Logo" class="mud-overlay" />
-    <pre>{fullTerminalContent}</pre>
-    <label for="term-input" style="display: none;">Input:</label>
-    <input
-      id="term-input"
-      bind:value={currentInput}
-      on:keydown={handleKeyPress}
-      class="term-input"
-      placeholder="Type your command..."
-    />
+<div class="repl-container">
+  <img src="/Mud_512x218_txt_blk.svg" alt="Mud Text Logo" class="mud-overlay" />
+  <div class="repl-interface">
+    <pre><code id="term-code" class="language-bash">{fullTerminalContent}</code></pre>
+    <textarea id="term-input" class="term-input" bind:value={currentInput} on:keydown={handleKeyPress} rows="1"></textarea>
   </div>
 </div>
 
+
 <style>
-  .container {
+  .repl-container {
     position: relative;
-    margin: auto;
-    margin-top: 2rem;
-    text-align: start;
-    overflow: hidden;
+    padding: 20px;
   }
 
   .mud-overlay {
     position: absolute;
-    top: 1rem;
+    top: 3rem;
     right: 3rem;
     width: 10rem;
     opacity: 0.3;
@@ -119,43 +96,42 @@
   }
 
   .repl-interface {
-    background-color: #333;
-    color: #f6f6f6;
-    padding: 20px;
-    scroll-padding-bottom: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    font-family: monospace;
-    white-space: pre-wrap;
-
-    height: 80vh;
-    display: flex;
-    overflow-y: scroll;
-    flex-direction: column;
-    margin: 0 2rem 0 2rem;
+      background-color: #333;
+      color: #f6f6f6;
+      padding: 20px;
+      padding-bottom: 0;
+      scroll-padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      font-family: monospace;
+      white-space: pre-wrap;
+      height: 85vh; /* Increased to allow space for the input */
+      display: flex;
+      overflow-y: scroll;
+      flex-direction: column;
+      margin: 1rem auto;
   }
 
   .term-input {
-    width: 100%;
-    background-color: transparent;
-    color: #f6f6f6;
-    border: none;
-    outline: none;
-    font-family: monospace;
-    padding: 0;
-    margin-top: 5px;
-    font-size: 1rem !important;
-    line-height: 1.5 !important;
-    resize: horizontal;
+      width: 100%;
+      background-color: transparent;
+      color: #f6f6f6;
+      border: none;
+      outline: none;
+      font-family: monospace;
+      padding: 5px; /* Added some padding */
+      margin-top: 5px;
+      font-size: 1rem !important;
+      line-height: 1.5 !important;
   }
 
   .term-input::placeholder {
-    color: #bbb;
+      color: #bbb;
   }
 
   pre {
-    margin: 0;
-    font-size: 1rem;
-    line-height: 1.5;
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.5;
   }
 </style>

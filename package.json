@@ -10,7 +10,7 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch",
     "tauri": "tauri",
-    "dev-build": "NO_STRIP=true tauri build",
+    "dev-build": "rm -rf \"~/.cache/mud\" && NO_STRIP=true tauri build",
     "start": "rm -rf \"~/.cache/mud\" && tauri dev"
   },
   "license": "MIT",
@@ -22,6 +22,7 @@
     "@tauri-apps/plugin-shell": ">=2.0.0-rc.0",
     "cookie": "^0.6.0",
     "dayjs": "^1.11.13",
+    "highlight.js": "^11.10.0",
     "lodash": "^4.17.21",
     "marked": "^14.0.0",
     "svelte-terminal": "github:candywater/svelte-terminal#0.0.2"
@@ -34,6 +35,7 @@
     "lightningcss": "^1.26.0",
     "svelte": "^4.2.7",
     "svelte-check": "^3.6.0",
+    "svelte-highlight": "^7.7.0",
     "typescript": "^5.0.0",
     "vite": "^5.0.3"
   }
