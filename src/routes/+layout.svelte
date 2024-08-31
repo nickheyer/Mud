@@ -7,7 +7,7 @@
     }
 </script>
 
-<link rel="stylesheet" href="/global.css">
+<link rel="stylesheet" href="/css/global.css">
 
 <nav>
     <ul>

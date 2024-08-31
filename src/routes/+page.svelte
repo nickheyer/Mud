@@ -26,10 +26,10 @@
   });
 </script>
 
-<link rel="stylesheet" href="/main.css">
+<link rel="stylesheet" href="/css/main.css">
 
 <div class="container">
-  <img src="/Mud_simple_transparent_gw.svg" alt="Mud Logo" class="logo" />
+  <img src="/images/Mud_simple_transparent_gw.svg" alt="Mud Logo" class="logo" />
 
   <h1>Welcome to Mud!</h1>
   <p>The multiplatform mod manager.</p>

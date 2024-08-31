@@ -32,37 +32,51 @@
     }
 
     async function handleKeyPress(event) {
-        if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault();
-            inputHistory.push(currentInput);
-            historyIndex = inputHistory.length;
-            if (currentInput === "clear") {
-                terminalOutput = "";
-                currentInput = "";
-            } else {
-                await runCommand(currentInput);
-            }
+        if (!event.shiftKey) {
+            switch (event.key) {
+                case "Enter":
+                    event.preventDefault();
+                    inputHistory.push(currentInput);
+                    historyIndex = inputHistory.length;
+                    if (currentInput === "clear") {
+                        terminalOutput = "";
+                        currentInput = "";
+                    } else {
+                        await runCommand(currentInput);
+                    }
+                    await scrollDown();
+                    break;
 
-            await scrollDown();
-
-        // Arrow keys didn't work as you good as youd think. 
-        } else if (event.key === "ArrowUp" && event.shiftKey) {
-            event.preventDefault();
-            if (historyIndex > 0) {
-                historyIndex--;
-                currentInput = inputHistory[historyIndex];
+                default:
+                    break;
             }
-        } else if (event.key === "ArrowDown" && event.shiftKey) {
-            event.preventDefault();
-            if (historyIndex < inputHistory.length - 1) {
-                historyIndex++;
-                currentInput = inputHistory[historyIndex];
-            } else {
-                historyIndex = inputHistory.length;
-                currentInput = "";
+        } else {
+            switch (event.key) {
+                case "ArrowUp":
+                    event.preventDefault();
+                    if (historyIndex > 0) {
+                        historyIndex--;
+                        currentInput = inputHistory[historyIndex];
+                    }
+                    break;
+
+                case "ArrowDown":
+                    event.preventDefault();
+                    if (historyIndex < inputHistory.length - 1) {
+                        historyIndex++;
+                        currentInput = inputHistory[historyIndex];
+                    } else {
+                        historyIndex = inputHistory.length;
+                        currentInput = "";
+                    }
+                    break;
+
+                default:
+                    break;
             }
         }
     }
+
 
     function focusInput() {
         terminalDiv.focus();
@@ -74,9 +88,11 @@
     });
 </script>
 
+<link rel="stylesheet" href="/css/terminal.css">
+
 <div class="repl-container">
     <img
-        src="/Mud_512x218_txt_blk.svg"
+        src="/images/Mud_512x218_txt_blk.svg"
         alt="Mud Text Logo"
         class="mud-overlay"
     />
@@ -93,58 +109,3 @@
     </div>
 </div>
 
-<style>
-    .repl-container {
-        position: relative;
-        padding: 20px;
-    }
-
-    .mud-overlay {
-        position: absolute;
-        top: 3rem;
-        right: 3rem;
-        width: 10rem;
-        opacity: 0.3;
-        pointer-events: none;
-    }
-
-    .repl-interface {
-        background-color: #333;
-        color: #f6f6f6;
-        padding: 20px;
-        padding-bottom: 0;
-        scroll-padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        font-family: monospace;
-        white-space: pre-wrap;
-        height: 85vh; /* Increased to allow space for the input */
-        display: flex;
-        overflow-y: scroll;
-        flex-direction: column;
-        margin: 1rem auto;
-    }
-
-    .term-input {
-        width: 100%;
-        background-color: transparent;
-        color: #f6f6f6;
-        border: none;
-        outline: none;
-        font-family: monospace;
-        padding: 5px; /* Added some padding */
-        margin-top: 5px;
-        font-size: 1rem !important;
-        line-height: 1.5 !important;
-    }
-
-    .term-input::placeholder {
-        color: #bbb;
-    }
-
-    pre {
-        margin: 0;
-        font-size: 1rem;
-        line-height: 1.5;
-    }
-</style>

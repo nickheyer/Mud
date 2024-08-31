@@ -22,8 +22,5 @@ export default defineConfig(async () => ({
     watch: {
       ignored: ["**/src-tauri/**"],
     },
-    optimizeDeps: {
-      include: ["highlight.js/lib/**"],
-    },
   },
 }));
