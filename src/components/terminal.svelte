@@ -6,11 +6,10 @@
     let inputHistory = [];
     let historyIndex = -1;
     let terminalOutput = "";
-    let terminalCodeBlock = null;
-    let terminalDiv = null;
+    let terminalContainer = null;
+    let terminalInput = null;
     $: currentInput = "";
-    $: fullTerminalContent =
-        terminalOutput + (currentInput ? `$ ${currentInput}` : "");
+    $: fullTerminalContent = terminalOutput;
 
     async function runCommand(command) {
         try {
@@ -23,12 +22,12 @@
             terminalOutput += `Error: ${JSON.stringify(error, null, 2)}\n`;
         } finally {
             currentInput = "";
-            historyIndex = inputHistory.length; // Reset the history index after execution
+            historyIndex = inputHistory.length;
         }
     }
 
     async function scrollDown() {
-        await terminalDiv.scrollIntoView({ behavior: "smooth", block: "end" });
+        await terminalInput.scrollIntoView({ behavior: "smooth", block: "end" });
     }
 
     async function handleKeyPress(event) {
@@ -70,20 +69,27 @@
                         currentInput = "";
                     }
                     break;
-
+                case "Enter":
+                    await scrollDown();
+                    break;
                 default:
                     break;
             }
         }
     }
 
+    function resizeTextInput() {   
+        this.style.height = "";
+        this.style.height = this.scrollHeight + "px";
+    }
 
     function focusInput() {
-        terminalDiv.focus();
+        terminalInput.focus();
     }
 
     onMount(() => {
-        terminalDiv = document.getElementById("term-input");
+        terminalContainer = document.getElementById("term-container");
+        terminalInput = document.getElementById("term-input");
         focusInput();
     });
 </script>
@@ -96,16 +102,28 @@
         alt="Mud Text Logo"
         class="mud-overlay"
     />
-    <div class="repl-interface">
-        <pre><code id="term-code" class="language-bash"
-                >{fullTerminalContent}</code
-            ></pre>
-        <textarea
+    <div
+        id="term-container"
+        class="repl-interface"
+        role="term"
+        tabindex="-1"
+        on:mouseover={focusInput}
+        on:focus={null}
+        ><pre
+            id="term-code"
+            class="language-bash"
+        >{fullTerminalContent}</pre>
+        <div
             id="term-input"
             class="term-input"
-            bind:value={currentInput}
+            contenteditable="true"
+            bind:innerHTML={currentInput}
             on:keydown={handleKeyPress}
-        ></textarea>
+            on:input={resizeTextInput}
+            role="textbox"
+            tabindex="-2"
+        ></div>
+        <div id="term-scroll-end"></div>
     </div>
 </div>
 

@@ -25,12 +25,16 @@ impl OutputCapture {
 
     pub fn get_stdout(&self) -> String {
         let stdout_buf = self.stdout_buf.lock().unwrap();
-        String::from_utf8(stdout_buf.get_ref().clone()).unwrap_or_default()
+        let stdout = String::from_utf8(stdout_buf.get_ref().clone()).unwrap_or_default();
+        println!("{:#?}", stdout);
+        stdout
     }
 
     pub fn get_stderr(&self) -> String {
         let stderr_buf = self.stderr_buf.lock().unwrap();
-        String::from_utf8(stderr_buf.get_ref().clone()).unwrap_or_default()
+        let stderr = String::from_utf8(stderr_buf.get_ref().clone()).unwrap_or_default();
+        println!("{:#?}", stderr);
+        stderr
     }
 }
 

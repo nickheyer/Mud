@@ -16,17 +16,18 @@
     background-color: #333;
     color: #f6f6f6;
     padding: 20px;
-    padding-bottom: 0;
-    scroll-padding: 20px;
+    padding-bottom: 0 !important;
+    scroll-padding-bottom: 40px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     font-family: monospace;
     white-space: pre-wrap;
-    height: 85vh; /* Increased to allow space for the input */
+    height: 85vh;
     display: flex;
     overflow-y: scroll;
     flex-direction: column;
     margin: 1rem auto;
+    
 }
 
 .term-input {
@@ -40,6 +41,8 @@
     margin-top: 5px;
     font-size: 1rem !important;
     line-height: 1.5 !important;
+    resize: none;
+    overflow: visible;
 }
 
 .term-input::placeholder {
@@ -50,4 +53,13 @@ pre {
     margin: 0;
     font-size: 1rem;
     line-height: 1.5;
+}
+
+#term-scroll-end {
+    min-height: 3rem !important;
+}
+
+.microlight {
+    font-family : monospace;
+    white-space : pre;
 }
