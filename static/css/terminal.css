@@ -30,36 +30,36 @@
     
 }
 
-.term-input {
-    width: 100%;
-    background-color: transparent;
-    color: #f6f6f6;
-    border: none;
-    outline: none;
-    font-family: monospace;
-    padding: 5px; /* Added some padding */
-    margin-top: 5px;
-    font-size: 1rem !important;
-    line-height: 1.5 !important;
-    resize: none;
-    overflow: visible;
-}
-
-.term-input::placeholder {
-    color: #bbb;
-}
-
-pre {
-    margin: 0;
-    font-size: 1rem;
-    line-height: 1.5;
-}
-
 #term-scroll-end {
     min-height: 3rem !important;
 }
 
-.microlight {
-    font-family : monospace;
-    white-space : pre;
+/* Editor Styles */
+
+.cm-editor {
+    background-color: transparent;
 }
+
+.cm-gutters {
+    border-right: 1px solid #232323 !important;
+    color: #6c6c6c !important;
+    background-color: transparent !important;
+}
+
+.cm-activeLineGutter {
+    background-color: #232323 !important;
+}
+
+.cm-activeLine {
+    background-color: transparent !important;
+    box-shadow: inset 7px 0 9px -7px rgba(0,0,0,0.4) !important;
+}
+
+.cm-focused {
+    outline: none !important;
+}
+
+.cm-tooltip-autocomplete {
+    background-color: #232323 !important;
+}
+

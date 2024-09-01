@@ -3,98 +3,72 @@
     import { onMount } from "svelte";
     import _ from "lodash";
 
+    import { basicSetup } from "codemirror";
+    import { EditorView, keymap } from "@codemirror/view";
+    import { autocompletion } from "@codemirror/autocomplete";
+    import { StreamLanguage } from "@codemirror/language";
+    import { indentWithTab } from "@codemirror/commands";
+    import { shell } from "@codemirror/legacy-modes/mode/shell";
+
     let inputHistory = [];
     let historyIndex = -1;
     let terminalOutput = "";
     let terminalContainer = null;
-    let terminalInput = null;
+    let terminalEditor = null;
     $: currentInput = "";
     $: fullTerminalContent = terminalOutput;
+
+    function createEditor(parent, theme) {
+        return new EditorView({
+            doc: "# Shift + Enter to run script!\n",
+            extensions: [
+                basicSetup,
+                keymap.of([indentWithTab]),
+                StreamLanguage.define(shell)
+            ],
+            parent,
+        });
+    }
+
+    // const completions = [
+    //     { label: "panic", type: "keyword" },
+    //     { label: "park", type: "constant", info: "Test completion" },
+    //     { label: "password", type: "variable" },
+    // ];
 
     async function runCommand(command) {
         try {
             const output = await invoke("run_script", {
                 scriptContent: command,
             });
-            terminalOutput += `> ${command}\n${_.trim(output, '"').replace(/\\n/g, "\n")}\n`;
+            console.log(output);
         } catch (error) {
             console.error("Error running script:", error);
-            terminalOutput += `Error: ${JSON.stringify(error, null, 2)}\n`;
-        } finally {
-            currentInput = "";
-            historyIndex = inputHistory.length;
         }
     }
 
-    async function scrollDown() {
-        await terminalInput.scrollIntoView({ behavior: "smooth", block: "end" });
-    }
+    // function myCompletions(context) {
+    //     let before = context.matchBefore(/\w+/);
+    //     // If completion wasn't explicitly started and there
+    //     // is no word before the cursor, don't open completions.
+    //     if (!context.explicit && !before) return null;
+    //     return {
+    //         from: before ? before.from : context.pos,
+    //         options: completions,
+    //         validFor: /^\w*$/,
+    //     };
+    // }
 
-    async function handleKeyPress(event) {
-        if (!event.shiftKey) {
-            switch (event.key) {
-                case "Enter":
-                    event.preventDefault();
-                    inputHistory.push(currentInput);
-                    historyIndex = inputHistory.length;
-                    if (currentInput === "clear") {
-                        terminalOutput = "";
-                        currentInput = "";
-                    } else {
-                        await runCommand(currentInput);
-                    }
-                    await scrollDown();
-                    break;
 
-                default:
-                    break;
-            }
-        } else {
-            switch (event.key) {
-                case "ArrowUp":
-                    event.preventDefault();
-                    if (historyIndex > 0) {
-                        historyIndex--;
-                        currentInput = inputHistory[historyIndex];
-                    }
-                    break;
-
-                case "ArrowDown":
-                    event.preventDefault();
-                    if (historyIndex < inputHistory.length - 1) {
-                        historyIndex++;
-                        currentInput = inputHistory[historyIndex];
-                    } else {
-                        historyIndex = inputHistory.length;
-                        currentInput = "";
-                    }
-                    break;
-                case "Enter":
-                    await scrollDown();
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-
-    function resizeTextInput() {   
-        this.style.height = "";
-        this.style.height = this.scrollHeight + "px";
-    }
-
-    function focusInput() {
-        terminalInput.focus();
-    }
 
     onMount(() => {
         terminalContainer = document.getElementById("term-container");
-        terminalInput = document.getElementById("term-input");
-        focusInput();
+        terminalEditor = createEditor(terminalContainer);
     });
+
 </script>
 
-<link rel="stylesheet" href="/css/terminal.css">
+<link rel="stylesheet" href="/css/terminal.css" />
 
 <div class="repl-container">
     <img
@@ -106,24 +80,6 @@
         id="term-container"
         class="repl-interface"
         role="term"
-        tabindex="-1"
-        on:mouseover={focusInput}
-        on:focus={null}
-        ><pre
-            id="term-code"
-            class="language-bash"
-        >{fullTerminalContent}</pre>
-        <div
-            id="term-input"
-            class="term-input"
-            contenteditable="true"
-            bind:innerHTML={currentInput}
-            on:keydown={handleKeyPress}
-            on:input={resizeTextInput}
-            role="textbox"
-            tabindex="-2"
-        ></div>
-        <div id="term-scroll-end"></div>
+    >
     </div>
 </div>
-

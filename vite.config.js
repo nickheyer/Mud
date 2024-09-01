@@ -8,6 +8,14 @@ const host = process.env.TAURI_DEV_HOST;
 export default defineConfig(async () => ({
   plugins: [sveltekit()],
   clearScreen: false,
+  optimizeDeps: {
+    exclude: [
+      // "svelte-codemirror-editor",
+      // "codemirror",
+      // "@codemirror/legacy-modes",
+      // "@codemirror/language"
+    ]
+  },
   server: {
     port: 5173,
     strictPort: true,
