@@ -44,6 +44,12 @@
     border-right: 1px solid #232323 !important;
     color: #6c6c6c !important;
     background-color: transparent !important;
+    min-width: 40px !important;
+    align-items: right !important;
+}
+
+.cm-gutterElement {
+    align-items: right !important;
 }
 
 .cm-activeLineGutter {
@@ -61,5 +67,18 @@
 
 .cm-tooltip-autocomplete {
     background-color: #232323 !important;
+}
+
+.cm-line::selection {
+    color: #232323 !important; /* your text color */
+}
+
+.cm-line::selection * {
+    background: transparent;
+}
+
+.cm-line::selection span {
+    background: transparent;
+    color: inherit;
 }
 
