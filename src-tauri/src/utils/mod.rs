@@ -1,2 +1,3 @@
-// Placeholder for utility functions
+pub mod error_handler;
 
+pub use error_handler::*;

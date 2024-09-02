@@ -3,6 +3,17 @@ use duckscript::types::runtime::Context;
 use duckscriptsdk;
 use crate::output::OutputCapture;
 use crate::context::setup_context_with_args;
+use crate::utils::handle_script_error;
+use std::collections::HashMap;
+
+use serde::Serialize;
+
+#[derive(Serialize)]
+pub struct ScriptResponse {
+    stdout: String,
+    stderr: String,
+    variables: HashMap<String, String>
+}
 
 #[tauri::command]
 pub fn run_script(script_content: String) -> Result<String, String> {
@@ -16,13 +27,27 @@ pub fn run_script(script_content: String) -> Result<String, String> {
 
     // Run the script w/ env
     match runner::run_script(&script_content, context, Some(env)) {
-        Ok(_) => {
-            let output = output_capture.get_stdout();
-            Ok(output)
+        Ok(ctx) => {
+            let stdout = output_capture.get_stdout();
+            let stderr = output_capture.get_stderr();
+            let variables = ctx.variables;
+
+            // Parse successful execution results
+            let script_resp = ScriptResponse { stdout, stderr, variables };
+            let json_resp = serde_json::to_string(&script_resp)
+                // Return default on failure to serialize
+                .unwrap_or_else(|_| "{\"message\": \"Failed to serialize response\"".to_string());
+            println!("Results of script serialized:\n{:#?}", json_resp);
+            Ok(json_resp)
         }
-        Err(error) => {
-            let error_output = output_capture.get_stderr();
-            Err(format!("Error running script: {:?}\n{}", error, error_output))
+        Err(err) => {
+            let stdout = output_capture.get_stdout();
+            let stderr = output_capture.get_stderr();
+            println!("ERROR IN MATCH: {:#?}\nERROR IN STDERR: {:#?}", err, stderr);
+
+            // Parse error to json serializable           
+            let json_error = handle_script_error(err, stderr, stdout);
+            Err(json_error)
         }
     }
 }

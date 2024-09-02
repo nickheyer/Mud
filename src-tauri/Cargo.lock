@@ -2053,6 +2053,7 @@ dependencies = [
  "duckscript",
  "duckscriptsdk",
  "gag",
+ "regex",
  "serde",
  "serde_json",
  "tauri",
