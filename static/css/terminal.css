@@ -16,8 +16,8 @@
     background-color: #333;
     color: #f6f6f6;
     padding: 20px;
-    padding-bottom: 0 !important;
-    scroll-padding-bottom: 40px;
+    padding-bottom: 100px;
+    scroll-padding-bottom: 100px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     font-family: monospace;
@@ -65,7 +65,8 @@
     outline: none !important;
 }
 
-.cm-tooltip-autocomplete {
+.cm-tooltip-autocomplete,
+.cm-tooltip-autocomplete div {
     background-color: #232323 !important;
 }
 

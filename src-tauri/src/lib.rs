@@ -12,6 +12,7 @@ pub fn run() {
             invocable::get_sync_status,
             invocable::run_scriptfile,
             invocable::run_script,
+            invocable::get_all_commands
         ])
         .run(tauri::generate_context!())
         .expect("error while running Tauri application");

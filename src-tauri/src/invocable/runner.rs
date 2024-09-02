@@ -17,6 +17,8 @@ pub struct ScriptResponse {
 
 #[tauri::command]
 pub fn run_script(script_content: String) -> Result<String, String> {
+    
+    println!("{:?}", script_content);
     // Init ds
     let mut context = Context::new();
     let _ = duckscriptsdk::load(&mut context.commands);
@@ -65,4 +67,11 @@ pub fn run_scriptfile(file_path: String, args: Vec<String>) -> Result<String, St
         Ok(ctx) => Ok(format!("{:?}", ctx.variables)),
         Err(error) => Err(format!("Error running script: {:?}", error)),
     }
+}
+
+#[tauri::command]
+pub fn get_all_commands() -> Vec<std::string::String> {
+    let mut context = Context::new();
+    let _ = duckscriptsdk::load(&mut context.commands);
+    context.commands.get_all_command_names()
 }

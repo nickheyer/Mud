@@ -7,24 +7,48 @@
     import { StreamLanguage } from "@codemirror/language";
     import { indentWithTab } from "@codemirror/commands";
     import { shell } from "@codemirror/legacy-modes/mode/shell";
+    import { autocompletion } from "@codemirror/autocomplete"
+    import { completions } from "./stdlib.json";
 
     let editors = [];
     let results = [];
     let terminalContainer;
 
+    function genCompletions(context) {
+        let before = context.matchBefore(/\w+/);
+        if (!context.explicit && !before) {
+            return null;
+        }
+        const word = before ? before.text : "";
+
+        const filteredCompletions = completions.filter(completion => 
+            completion.label.toLowerCase().startsWith(word.toLowerCase())
+        );
+
+        filteredCompletions.sort((a, b) => a.label.localeCompare(b.label));
+
+        return {
+            from: before ? before.from : context.pos,
+            options: filteredCompletions,
+            validFor: /^\w*$/ // Valid as long as input is a word character
+        };
+    }
+            
     // Function to create a new editor
     function createEditor(readOnly = false) {
         const editable = new Compartment();
-        let editor = new EditorView({
-            doc: readOnly ? "" : "# Shift + Enter to run script!\n",
+        const editor = new EditorView({
+            doc: (readOnly || editors.length > 0) ? "" : "# Shift + Enter to run script!\n",
             extensions: [
                 basicSetup,
                 keymap.of([indentWithTab]),
                 StreamLanguage.define(shell),
                 editable.of(EditorView.editable.of(!readOnly)), // Read only set
+                autocompletion({override: [genCompletions]})
             ],
             parent: terminalContainer,
         });
+        editor.focus();
         return {
             editor,
             editable
@@ -46,7 +70,7 @@
     function createError(result) {
         const errText = result.message;
         return new EditorView({
-            doc: errText && errText.length > 0 ? errText : 'Error: Reason unavailable',
+            doc: errText && errText.length > 0 ? errText : 'Error: Unknown',
             extensions: [
                 minimalSetup,
                 EditorView.editable.of(false)
@@ -77,6 +101,7 @@
         const { editor, editable } = editorObj;
 
         const command = editor.state.doc.toString();
+        console.log(command);
         try {
 
             // Invoke with sdk runner
@@ -88,13 +113,11 @@
             console.log(output);
             let outObj;
             try {
-                // Push error message to results
+                // Push output to results
                 outObj = JSON.parse(output);
             } catch(e) {
                 outObj = { stderr: '', stdout: '', variables: null };
             }
-
-            // Save result editor
             results.push(createResult(outObj));
 
         } catch (err) {
@@ -118,7 +141,7 @@
     async function scrollToEditor(editor) {
         const elem = editor.dom;
         await elem.scrollIntoView({ behavior: "smooth", block: "end" });
-        elem.focus();
+        editor.focus();
     }
 
     // Function to handle Shift + Enter key combination for running the script
