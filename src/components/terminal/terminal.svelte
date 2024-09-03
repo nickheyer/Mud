@@ -40,7 +40,10 @@
     ──────────────────────────────────────────────────────────────────\n:motd
     \n\n`;
 
+    // State effect to add an underline effect
     const addUnderlineEffect = StateEffect.define();
+
+    // Defines state field for underlines
     const underlineField = StateField.define({
         create() {
             return Decoration.none;
@@ -61,22 +64,26 @@
         provide: (field) => EditorView.decorations.from(field),
     });
 
-    // Wraps the above code-mirror abstracted bs into this function to change the style on a single line
+    /**
+     * Apply underline effect to a specific line in the editor.
+     * @param {number} lineNumber - The line number to underline.
+     * @param {EditorView} editor - The editor instance.
+     */
     function underlineLine(lineNumber, editor) {
         editor.dispatch({
             effects: addUnderlineEffect.of(lineNumber),
         });
     }
 
-    // Spawn new editor + focus it
+    /**
+     * Create a new editor instance and focus it.
+     * @param {boolean} readOnly - Whether the editor should be read-only.
+     * @returns {Object} The created editor and its editable compartment.
+     */
     function createEditor(readOnly = false) {
         const editable = new Compartment();
-
         const editor = new EditorView({
-            doc:
-                readOnly || editors.length > 0
-                    ? ""
-                    : initComment,
+            doc: readOnly || editors.length > 0 ? "" : initComment,
             extensions: [
                 basicSetup,
                 keymap.of([indentWithTab]),
@@ -88,12 +95,14 @@
         });
 
         editor.focus();
-        return {
-            editor,
-            editable,
-        };
+        return { editor, editable };
     }
 
+    /**
+     * Create an editor view to display script execution results.
+     * @param {Object} result - The result object containing stdout.
+     * @returns {EditorView} The result editor view.
+     */
     function createResult(result) {
         const resultText = result.stdout;
         return new EditorView({
@@ -106,9 +115,13 @@
         });
     }
 
+    /**
+     * Create an editor view to display error messages.
+     * @param {Object} result - The result object containing the error message.
+     * @returns {EditorView} The error editor view.
+     */
     function createError(result) {
         const errText = result.message;
-        console.log(result);
         return new EditorView({
             doc: errText && errText.length > 0 ? errText : "Error: Unknown",
             extensions: [minimalSetup, EditorView.editable.of(false)],
@@ -116,59 +129,50 @@
         });
     }
 
+    /**
+     * Dispatch changes to the current editor and create a new one.
+     * @param {Object} oldEditorObj - The previous editor object.
+     */
     async function dispatchAndRotateToNewEditor(oldEditorObj) {
         const { editor, editable } = oldEditorObj;
 
-        // Make the current editor read-only
+        // Make read-only
         editor.dispatch({
             effects: editable.reconfigure(EditorView.editable.of(false)),
         });
 
-        // Create a new editor for the next command
+        // Create editor for next command
         const newEditor = createEditor();
         editors.push(newEditor);
 
-        // Append the element as a new child to the parent container div + scroll to it
+        // Append new editor and scroll into view
         terminalContainer.appendChild(newEditor.editor.dom);
         await scrollToEditor(newEditor.editor);
     }
 
-    // Invoke script on backend
+    /**
+     * Run the script code and handle the result or error.
+     * @param {Object} editorObj - The editor object containing the code to run.
+     */
     async function runCode(editorObj) {
-        const { editor, editable } = editorObj;
-
+        const { editor } = editorObj;
         const command = editor.state.doc.toString();
-        console.log(command);
         let result = null;
+
         try {
-            // Invoke with sdk runner
             const output = await invoke("run_script", {
                 scriptContent: command,
             });
-
-            // Log output
-            console.log(output);
-            let outObj;
-            try {
-                // Push output to results
-                outObj = JSON.parse(output);
-            } catch (e) {
-                outObj = { stderr: "", stdout: "", variables: null };
-            }
+            let outObj = JSON.parse(output);
             result = createResult(outObj);
         } catch (err) {
-            // Log error
-            console.error(err);
             let errObj;
             try {
-                // Parse error to object
                 errObj = JSON.parse(err);
                 if (errObj.line) {
-                    // Generate editor diagnostic + dispatch to editor
                     underlineLine(errObj.line, editor);
                 }
             } catch (e) {
-                console.log(e);
                 errObj = { stderr: "", stdout: "", line: null, message: "" };
             }
             result = createError(errObj);
@@ -178,17 +182,24 @@
             results.push(result);
         }
 
-        // Make prev static + gen new editor
+        // Prepare for the next input
         await dispatchAndRotateToNewEditor(editorObj);
     }
 
+    /**
+     * Smoothly scroll to the provided editor view.
+     * @param {EditorView} editor - The editor to scroll to.
+     */
     async function scrollToEditor(editor) {
         const elem = editor.dom;
         await elem.scrollIntoView({ behavior: "smooth", block: "end" });
         editor.focus();
     }
 
-    // Function to handle Shift + Enter key combination for running the script
+    /**
+     * Handle Shift + Enter key combination to run the script.
+     * @param {KeyboardEvent} event - The keyboard event object.
+     */
     function handleKeyDown(event) {
         if (event.key === "Enter" && event.shiftKey) {
             event.preventDefault();
@@ -197,7 +208,7 @@
         }
     }
 
-    // Initialize the first editor on mount
+    // Init the first editor on mount
     onMount(() => {
         terminalContainer = document.getElementById("term-container");
         let firstEditor = createEditor();
