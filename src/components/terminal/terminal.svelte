@@ -1,80 +1,117 @@
 <script>
-    import { invoke } from "@tauri-apps/api/core";
-    import { onMount } from "svelte";
     import { basicSetup, minimalSetup } from "codemirror";
-    import { Compartment } from "@codemirror/state"
-    import { EditorView, keymap } from "@codemirror/view";
+    import { Compartment, StateEffect, StateField } from "@codemirror/state";
+    import {
+        keymap,
+        EditorView,
+        Decoration,
+        DecorationSet,
+    } from "@codemirror/view";
     import { StreamLanguage } from "@codemirror/language";
     import { indentWithTab } from "@codemirror/commands";
-    import { shell } from "@codemirror/legacy-modes/mode/shell";
-    import { autocompletion } from "@codemirror/autocomplete"
-    import { completions } from "./stdlib.json";
+    import { mud } from "./linting-rules/mud";
+    import { setDiagnostics, forceLinting } from "@codemirror/lint";
+    import { invoke } from "@tauri-apps/api/core";
+    import { onMount } from "svelte";
 
     let editors = [];
     let results = [];
     let terminalContainer;
 
-    function genCompletions(context) {
-        let before = context.matchBefore(/\w+/);
-        if (!context.explicit && !before) {
-            return null;
-        }
-        const word = before ? before.text : "";
+    const initComment = `goto :motd
+    ───────────────╾⧗ WELCOME TO THE MUD TERMINAL ⧗╼───────────────
 
-        const filteredCompletions = completions.filter(completion => 
-            completion.label.toLowerCase().startsWith(word.toLowerCase())
-        );
+     Welcome to
+     ███╗   ███╗██╗   ██╗██████╗ 
+     ████╗ ████║██║   ██║██╔══██╗
+     ██╔████╔██║██║   ██║██║  ██║
+     ██║╚██╔╝██║██║   ██║██║  ██║
+     ██║ ╚═╝ ██║╚██████╔╝██████╔╝
+     ╚═╝     ╚═╝ ╚═════╝ ╚═════╝ 
 
-        filteredCompletions.sort((a, b) => a.label.localeCompare(b.label));
+    ▌▛▖ 🡆 Press **Ctrl + Space** to unveil the arsenal of commands in the standard 
+    ▌▛▖ library. Let the autocomplete guide you through the digital fog.
 
-        return {
-            from: before ? before.from : context.pos,
-            options: filteredCompletions,
-            validFor: /^\w*$/ // Valid as long as input is a word character
-        };
+    ▌▛▖ 🡆 Ready to execute your script? Hit **Shift + Enter** to run it in this 
+    ▌▛▖ terminal and see the code come alive.
+
+    ▌▛▖ Good luck, hacker.
+
+    ──────────────────────────────────────────────────────────────────\n:motd
+    \n\n`;
+
+    const addUnderlineEffect = StateEffect.define();
+    const underlineField = StateField.define({
+        create() {
+            return Decoration.none;
+        },
+        update(underlines, tr) {
+            underlines = underlines.map(tr.changes);
+            for (let effect of tr.effects) {
+                if (effect.is(addUnderlineEffect)) {
+                    const line = tr.state.doc.line(effect.value);
+                    const underlineDeco = Decoration.line({
+                        class: "term-line-err",
+                    }).range(line.from);
+                    underlines = underlines.update({ add: [underlineDeco] });
+                }
+            }
+            return underlines;
+        },
+        provide: (field) => EditorView.decorations.from(field),
+    });
+
+    // Wraps the above code-mirror abstracted bs into this function to change the style on a single line
+    function underlineLine(lineNumber, editor) {
+        editor.dispatch({
+            effects: addUnderlineEffect.of(lineNumber),
+        });
     }
-            
-    // Function to create a new editor
+
+    // Spawn new editor + focus it
     function createEditor(readOnly = false) {
         const editable = new Compartment();
+
         const editor = new EditorView({
-            doc: (readOnly || editors.length > 0) ? "" : "# Shift + Enter to run script!\n",
+            doc:
+                readOnly || editors.length > 0
+                    ? ""
+                    : initComment,
             extensions: [
                 basicSetup,
                 keymap.of([indentWithTab]),
-                StreamLanguage.define(shell),
-                editable.of(EditorView.editable.of(!readOnly)), // Read only set
-                autocompletion({override: [genCompletions]})
+                StreamLanguage.define(mud),
+                editable.of(EditorView.editable.of(!readOnly)),
+                underlineField,
             ],
             parent: terminalContainer,
         });
+
         editor.focus();
         return {
             editor,
-            editable
+            editable,
         };
     }
 
     function createResult(result) {
         const resultText = result.stdout;
         return new EditorView({
-            doc: resultText && resultText.length > 0 ? resultText : 'No results to display',
-            extensions: [
-                minimalSetup,
-                EditorView.editable.of(false)
-            ],
+            doc:
+                resultText && resultText.length > 0
+                    ? resultText
+                    : "No results to display",
+            extensions: [minimalSetup, EditorView.editable.of(false)],
             parent: terminalContainer,
         });
     }
 
     function createError(result) {
         const errText = result.message;
+        console.log(result);
         return new EditorView({
-            doc: errText && errText.length > 0 ? errText : 'Error: Unknown',
-            extensions: [
-                minimalSetup,
-                EditorView.editable.of(false)
-            ],
+            doc: errText && errText.length > 0 ? errText : "Error: Unknown",
+            extensions: [minimalSetup, EditorView.editable.of(false)],
             parent: terminalContainer,
         });
     }
@@ -84,7 +121,7 @@
 
         // Make the current editor read-only
         editor.dispatch({
-            effects: editable.reconfigure(EditorView.editable.of(false))
+            effects: editable.reconfigure(EditorView.editable.of(false)),
         });
 
         // Create a new editor for the next command
@@ -96,14 +133,14 @@
         await scrollToEditor(newEditor.editor);
     }
 
-    // Function to handle running code from the editor
+    // Invoke script on backend
     async function runCode(editorObj) {
         const { editor, editable } = editorObj;
 
         const command = editor.state.doc.toString();
         console.log(command);
+        let result = null;
         try {
-
             // Invoke with sdk runner
             const output = await invoke("run_script", {
                 scriptContent: command,
@@ -115,23 +152,30 @@
             try {
                 // Push output to results
                 outObj = JSON.parse(output);
-            } catch(e) {
-                outObj = { stderr: '', stdout: '', variables: null };
+            } catch (e) {
+                outObj = { stderr: "", stdout: "", variables: null };
             }
-            results.push(createResult(outObj));
-
+            result = createResult(outObj);
         } catch (err) {
-
             // Log error
             console.error(err);
             let errObj;
             try {
-                // Push error message to results
+                // Parse error to object
                 errObj = JSON.parse(err);
-            } catch(e) {
-                errObj = { stderr: '', stdout: '', line: null, message: ''};
+                if (errObj.line) {
+                    // Generate editor diagnostic + dispatch to editor
+                    underlineLine(errObj.line, editor);
+                }
+            } catch (e) {
+                console.log(e);
+                errObj = { stderr: "", stdout: "", line: null, message: "" };
             }
-            results.push(createError(errObj));
+            result = createError(errObj);
+        }
+
+        if (result) {
+            results.push(result);
         }
 
         // Make prev static + gen new editor
@@ -156,7 +200,6 @@
     // Initialize the first editor on mount
     onMount(() => {
         terminalContainer = document.getElementById("term-container");
-
         let firstEditor = createEditor();
         editors.push(firstEditor);
         window.addEventListener("keydown", handleKeyDown);
@@ -164,9 +207,6 @@
             window.removeEventListener("keydown", handleKeyDown);
         };
     });
-
-
-
 </script>
 
 <link rel="stylesheet" href="/css/terminal.css" />
@@ -179,6 +219,3 @@
     />
     <div id="term-container" class="repl-interface" role="term"></div>
 </div>
-
-<style>
-</style>
