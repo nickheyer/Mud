@@ -1,7 +1,8 @@
-![logo](static/images/Mud_full_transparent_scaled_gw.png)
-
 # Mud
 Mud aspires to be a community sourced mod management framework and application. Inherently compatible with any game or platform, Mud does it all.
+![logo](static/images/Mud_full_transparent_scaled_gw.png)
+
+
 
 
 
@@ -17,4 +18,4 @@ Mudfiles are the heart of the Mud Mod Manager. They are open-source instructions
 
 You can find all currently available `.mudfiles` here: [Mud.Community](https://github.com/nickheyer/Mud.Community)
 
-> While mudfiles can be imported via a `repl` session using pre-processor commands like `!include_files ./helloworld.mud`, the source control management has not been implemented in Mud (though it's in it's early dev stages and work pretty well).
+> While mudfiles can be imported via a `repl` session using pre-processor commands like `!include_files ./helloworld.mud`, the source control management has not yet been implemented in Mud (though it's in it's early dev stages and close to done!).
