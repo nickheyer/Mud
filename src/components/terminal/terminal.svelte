@@ -11,7 +11,7 @@
     import { indentWithTab } from "@codemirror/commands";
     import { mud } from "./linting-rules/mud";
     import { setDiagnostics, forceLinting } from "@codemirror/lint";
-    import { invoke } from "@tauri-apps/api/core";
+    import { invoke, Channel } from "@tauri-apps/api/core";
     import { onMount } from "svelte";
 
     let editors = [];
@@ -19,7 +19,7 @@
     let terminalContainer;
 
     const initComment = `goto :motd
-    ───────────────╾⧗ WELCOME TO THE MUD TERMINAL ⧗╼───────────────
+    ─────────────╾⧗ WELCOME TO THE MUD TERMINAL ⧗╼─────────────
 
      Welcome to
      ███╗   ███╗██╗   ██╗██████╗ 
@@ -29,15 +29,16 @@
      ██║ ╚═╝ ██║╚██████╔╝██████╔╝
      ╚═╝     ╚═╝ ╚═════╝ ╚═════╝ 
 
-    ▌▛▖ 🡆 Press **Ctrl + Space** to unveil the arsenal of commands in the standard 
-    ▌▛▖ library. Let the autocomplete guide you through the digital fog.
+    ▌▛▖ 🡆 Press **Ctrl + Space** to unveil the arsenal of 
+    ▌▛▖ commands in the standard library. Let the autocomplete
+    ▌▛▖ guide you through the digital fog.
 
-    ▌▛▖ 🡆 Ready to execute your script? Hit **Shift + Enter** to run it in this 
-    ▌▛▖ terminal and see the code come alive.
+    ▌▛▖ 🡆 Ready to execute your script? Hit **Shift + Enter**
+    ▌▛▖ to run it in this terminal and see the code come alive.
 
     ▌▛▖ Good luck, hacker.
 
-    ──────────────────────────────────────────────────────────────────\n:motd
+    ────────────────────────────────────────────────────────────\n:motd
     \n\n`;
 
     // State effect to add an underline effect
@@ -99,20 +100,36 @@
     }
 
     /**
+     * Append new content to the existing editor.
+     * @param {EditorView} editor - The editor instance.
+     * @param {string} newText - The new text to append.
+     */
+    function appendToEditor(editor, newText) {
+        const currentDoc = editor.state.doc.toString();
+        const updatedDoc = currentDoc + "\n" + newText;
+
+        // Dispatch the new state to append the text
+        editor.dispatch({
+            changes: { from: currentDoc.length, insert: newText },
+        });
+    }
+
+    /**
      * Create an editor view to display script execution results.
-     * @param {Object} result - The result object containing stdout.
      * @returns {EditorView} The result editor view.
      */
-    function createResult(result) {
-        const resultText = result.stdout;
-        return new EditorView({
-            doc:
-                resultText && resultText.length > 0
-                    ? resultText
-                    : "No results to display",
+    function createResultEditor(updater) {
+        const resEditor = new EditorView({
             extensions: [minimalSetup, EditorView.editable.of(false)],
             parent: terminalContainer,
         });
+        updater.onmessage = (message) => {
+            const stdoutText = message?.data?.message || null;
+            if (stdoutText) {
+                appendToEditor(resEditor, stdoutText);
+            }
+        };
+
     }
 
     /**
@@ -157,15 +174,20 @@
     async function runCode(editorObj) {
         const { editor } = editorObj;
         const command = editor.state.doc.toString();
-        let result = null;
 
-        try {
-            const output = await invoke("run_script", {
-                scriptContent: command,
-            });
-            let outObj = JSON.parse(output);
-            result = createResult(outObj);
-        } catch (err) {
+        let resultEditor = null;
+        const onEvent = new Channel();
+
+
+        // Let the command run in background with it's callback.
+        createResultEditor(onEvent);
+        await invoke("run_script", {
+            scriptContent: command,
+            onEvent
+        })
+        .then((message) => console.log(message))
+        .catch((err) => {
+            console.log(JSON.stringify(err));
             let errObj;
             try {
                 errObj = JSON.parse(err);
@@ -175,12 +197,8 @@
             } catch (e) {
                 errObj = { stderr: "", stdout: "", line: null, message: "" };
             }
-            result = createError(errObj);
-        }
-
-        if (result) {
-            results.push(result);
-        }
+            resultEditor = createError(errObj);
+        });
 
         // Prepare for the next input
         await dispatchAndRotateToNewEditor(editorObj);
