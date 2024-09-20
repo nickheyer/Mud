@@ -108,19 +108,13 @@ pub async fn run_script(
     });
 
     // Wait for all tasks to finish
-    let script_result = script_task.await;
-    let _stdout_result = stdout_task.await;
-    let _stderr_result = stderr_task.await;
+    match tokio::try_join!(
+        script_task,
+        stdout_task,
+        stderr_task
+    ) {
 
-    // Handle script result
-    match script_result {
-
-        Ok(res) => {
-            match res {
-                Ok(code_res) => Ok(code_res),
-                Err(code_err) => Err(code_err)
-            }
-        },
+        Ok((res, _, _)) => res,
 
         Err(err) => {
             println!("ERROR IN ASYNC TASK RUNTIME: {:#?}", err);
