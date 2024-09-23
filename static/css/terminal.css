@@ -26,7 +26,7 @@
     display: flex;
     overflow-y: scroll;
     flex-direction: column;
-    margin: 1rem auto;
+    margin: 1rem auto 0 auto;
     
 }
 
@@ -87,3 +87,24 @@
     background-color: rgba(255, 0, 0, 0.2) !important;
 }
 
+/* Syntax Highlighting Overrides */
+
+/* Strings */
+.ͼe {
+    color: #d472c1 !important;
+}
+
+/* Comments */
+.ͼm {
+    color: #d1874b !important;
+}
+
+/* Numbers */
+.ͼd {
+    color: #3cc48e !important;
+}
+
+/* Misc Keywords */
+.ͼb {
+    color: #d40592 !important;
+}

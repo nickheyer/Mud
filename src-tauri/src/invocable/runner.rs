@@ -1,11 +1,13 @@
 use duckscript::runner;
 use duckscript::types::runtime::Context;
 use duckscriptsdk;
+use tauri::Listener;
 use crate::output::OutputCapture;
 use crate::context::setup_context_with_args;
 use crate::utils::handle_script_error;
 use tokio::sync::mpsc;
 use tokio::{self, task};
+use tokio_util::sync::CancellationToken;
 use std::collections::HashMap;
 use serde::Serialize;
 use tauri::{AppHandle, ipc::Channel};
@@ -14,110 +16,97 @@ use tauri::{AppHandle, ipc::Channel};
 pub struct ScriptResponse {
     stdout: String,
     stderr: String,
-    variables: HashMap<String, String>
+    variables: HashMap<String, String>,
 }
-
 
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase", tag = "event", content = "data")]
 pub enum PayloadEvent {
-  #[serde(rename_all = "camelCase")]
-  Stdout {
-    message: String
-  },
-  #[serde(rename_all = "camelCase")]
-  _Stderr {
-    message: String
-  },
-  #[serde(rename_all = "camelCase")]
-  _Started {
-    message: String
-  },
-  #[serde(rename_all = "camelCase")]
-  _Finished {
-    message: String
-  },
+    Stdout { message: String },
+    _Stderr { message: String },
+    _Started { message: String },
+    _Finished { message: String },
 }
-
 
 #[tauri::command]
 pub async fn run_script(
-    _app: AppHandle,
+    handle: AppHandle,
     script_content: String,
-    on_event: Channel<PayloadEvent>
+    on_event: Channel<PayloadEvent>,
 ) -> Result<String, String> {
     println!("{:?}", script_content);
 
-    // Create async channels for stdout and stderr
     let (stdout_tx, mut stdout_rx) = mpsc::channel(10);
     let (stderr_tx, mut stderr_rx) = mpsc::channel(10);
 
-    // Spawn a blocking task to run the script on a separate thread
     let script_task = task::spawn_blocking(move || {
-        // Init duckscript
         let mut context = Context::new();
-        let _ = duckscriptsdk::load(&mut context.commands);
+        duckscriptsdk::load(&mut context.commands).unwrap();
 
-        // Create an OutputCapture instance for stdio
         let output_capture = OutputCapture::new(stdout_tx, stderr_tx);
         let env = output_capture.as_env();
 
-        // Run the script with env
-        let result = match runner::run_script(&script_content, context, Some(env)) {
+        match runner::run_script(&script_content, context, Some(env)) {
             Ok(ctx) => {
-                let stdout = output_capture.get_stdout();
-                let stderr = output_capture.get_stderr();
-                let variables = ctx.variables;
-
-                // Create ScriptResponse and serialize it to JSON
-                let script_resp = ScriptResponse { stdout, stderr, variables };
-                let json_resp = serde_json::to_string(&script_resp)
-                    // Return default on failure to serialize
+                let response = ScriptResponse {
+                    stdout: output_capture.get_stdout(),
+                    stderr: output_capture.get_stderr(),
+                    variables: ctx.variables,
+                };
+                let json = serde_json::to_string(&response)
                     .unwrap_or_else(|_| "{\"message\": \"Failed to serialize response\"".to_string());
-                
-                // RETURNING RESULTS FROM THREAD HERE
-                println!("Results of script:\n{:#?}", json_resp);
-                Ok(json_resp)
+                Ok(json)
             }
             Err(err) => {
                 let stdout = output_capture.get_stdout();
                 let stderr = output_capture.get_stderr();
-                println!("ERROR IN MATCH: {:#?}\nERROR IN STDERR: {:#?}", err, stderr);
-
-                // RETURNING ERROR FROM THREAD HERE        
-                let json_error = handle_script_error(err, stderr, stdout);
-                Err(json_error)
+                let json = handle_script_error(err, stderr, stdout);
+                Err(json)
             }
-        };
-
-        result
+        }
     });
 
-    // Spawn tasks to listen to the stdout and stderr channels
-    let stdout_task = task::spawn(async move {
+    // Cancellation tokens for stdio
+    let cancel_token = CancellationToken::new();
+    let cancel_token_stdout = cancel_token.child_token();
+    let cancel_token_stderr = cancel_token.child_token();
+
+    let stdout_task: task::JoinHandle<Result<(), String>> = task::spawn(async move {
+        handle.once_any("page-nav", move |_| {
+            println!("Killing tasks due to REPL exit / page navigation.");
+            cancel_token.cancel();
+        });
+    
         while let Some(line) = stdout_rx.recv().await {
-            println!("STDOUT: {}", line);
-            on_event.send(PayloadEvent::Stdout { message: line }).unwrap();
+            if cancel_token_stdout.is_cancelled() {
+                return Err("Stdout was cancelled.".to_string());
+            }
+    
+            println!("STDOUT: {:#?}", line);
+            if let Err(err) = on_event.send(PayloadEvent::Stdout { message: line }) {
+                return Err(format!("Failed to send event: {:?}", err));
+            }
         }
+    
+        Ok(())
     });
 
-    let stderr_task = task::spawn(async move {
+    let stderr_task: task::JoinHandle<Result<(), String>> = task::spawn(async move {
         while let Some(line) = stderr_rx.recv().await {
-            println!("STDERR: {}", line);
+            if cancel_token_stderr.is_cancelled() {
+                return Err("Stderr was cancelled.".to_string());
+            }
+            println!("STDERR: {:#?}", line);
         }
+    
+        Ok(())
     });
 
-    // Wait for all tasks to finish
-    match tokio::try_join!(
-        script_task,
-        stdout_task,
-        stderr_task
-    ) {
 
+    match tokio::try_join!(script_task, stdout_task, stderr_task) {
         Ok((res, _, _)) => res,
-
         Err(err) => {
-            println!("ERROR IN ASYNC TASK RUNTIME: {:#?}", err);
+            println!("Error in async task runtime: {:?}", err);
             Err(err.to_string())
         }
     }
@@ -125,21 +114,18 @@ pub async fn run_script(
 
 #[tauri::command]
 pub fn run_scriptfile(file_path: String, args: Vec<String>) -> Result<String, String> {
-     // Init ds
     let mut context = Context::new();
-    let _ = duckscriptsdk::load(&mut context.commands);
+    duckscriptsdk::load(&mut context.commands).unwrap();
     setup_context_with_args(&mut context, args);
 
-    // Run the script file, log variable output
-    match runner::run_script_file(&file_path, context, None) {
-        Ok(ctx) => Ok(format!("{:?}", ctx.variables)),
-        Err(error) => Err(format!("Error running script: {:?}", error)),
-    }
+    runner::run_script_file(&file_path, context, None)
+        .map(|ctx| format!("{:?}", ctx.variables))
+        .map_err(|error| format!("Error running script: {:?}", error))
 }
 
 #[tauri::command]
-pub fn get_all_commands() -> Vec<std::string::String> {
+pub fn get_all_commands() -> Vec<String> {
     let mut context = Context::new();
-    let _ = duckscriptsdk::load(&mut context.commands);
+    duckscriptsdk::load(&mut context.commands).unwrap();
     context.commands.get_all_command_names()
 }

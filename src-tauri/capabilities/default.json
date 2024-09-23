@@ -8,6 +8,8 @@
   "permissions": [
     "core:app:default",
     "shell:allow-open",
-    "process:default"
+    "process:default",
+    "core:event:allow-emit",
+    "core:event:default"
   ]
 }
