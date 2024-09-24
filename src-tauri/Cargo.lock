@@ -755,7 +755,7 @@ dependencies = [
 [[package]]
 name = "duckscript"
 version = "0.8.0"
-source = "git+https://github.com/nickheyer/duckscript?branch=master#1e69014ffd555977db16f49b9dbeff0068b04293"
+source = "git+https://github.com/nickheyer/duckscript?branch=master#e3cfcd0332ef72575cc7b171a6b51dd7f8b0380f"
 dependencies = [
  "fsio",
 ]
@@ -763,7 +763,7 @@ dependencies = [
 [[package]]
 name = "duckscriptsdk"
 version = "0.9.3"
-source = "git+https://github.com/nickheyer/duckscript?branch=master#1e69014ffd555977db16f49b9dbeff0068b04293"
+source = "git+https://github.com/nickheyer/duckscript?branch=master#e3cfcd0332ef72575cc7b171a6b51dd7f8b0380f"
 dependencies = [
  "attohttpc",
  "base64 0.22.1",
