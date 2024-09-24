@@ -1,16 +1,25 @@
 use duckscript::runner;
 use duckscript::types::runtime::Context;
 use duckscriptsdk;
-use tauri::Listener;
+
 use crate::output::OutputCapture;
 use crate::context::setup_context_with_args;
 use crate::utils::handle_script_error;
 use tokio::sync::mpsc;
 use tokio::{self, task};
-use tokio_util::sync::CancellationToken;
 use std::collections::HashMap;
 use serde::Serialize;
-use tauri::{AppHandle, ipc::Channel};
+use std::sync::Arc;
+use std::sync::atomic::{
+    AtomicBool,
+    Ordering
+};
+
+use tauri::{
+    AppHandle,
+    ipc::Channel,
+    Listener
+};
 
 #[derive(Serialize)]
 pub struct ScriptResponse {
@@ -36,15 +45,29 @@ pub async fn run_script(
 ) -> Result<String, String> {
     println!("{:?}", script_content);
 
+    // Atomic booleans for quiting tasks prematurely
+    let halt_flag = Arc::new(AtomicBool::new(false));
+    let task_halt_token = halt_flag.clone();
+    let stdout_halt_token = halt_flag.clone();
+    let stderr_halt_token = halt_flag.clone();
+
+    handle.once_any("page-nav", move |_| {
+        println!("Killing tasks due to REPL exit / page navigation.");
+        task_halt_token.store(true, Ordering::SeqCst);
+    });
+    
+    // Channels
     let (stdout_tx, mut stdout_rx) = mpsc::channel(10);
     let (stderr_tx, mut stderr_rx) = mpsc::channel(10);
-
-    let script_task = task::spawn_blocking(move || {
+    
+    // Tasks
+    let script_task: task::JoinHandle<Result<String, String>> = task::spawn_blocking(move || {
+        
+        // Env
+        let output_capture = OutputCapture::new(stdout_tx, stderr_tx, Some(halt_flag));
+        let env = output_capture.as_env();
         let mut context = Context::new();
         duckscriptsdk::load(&mut context.commands).unwrap();
-
-        let output_capture = OutputCapture::new(stdout_tx, stderr_tx);
-        let env = output_capture.as_env();
 
         match runner::run_script(&script_content, context, Some(env)) {
             Ok(ctx) => {
@@ -66,19 +89,9 @@ pub async fn run_script(
         }
     });
 
-    // Cancellation tokens for stdio
-    let cancel_token = CancellationToken::new();
-    let cancel_token_stdout = cancel_token.child_token();
-    let cancel_token_stderr = cancel_token.child_token();
-
     let stdout_task: task::JoinHandle<Result<(), String>> = task::spawn(async move {
-        handle.once_any("page-nav", move |_| {
-            println!("Killing tasks due to REPL exit / page navigation.");
-            cancel_token.cancel();
-        });
-    
         while let Some(line) = stdout_rx.recv().await {
-            if cancel_token_stdout.is_cancelled() {
+            if stdout_halt_token.load(Ordering::SeqCst) {
                 return Err("Stdout was cancelled.".to_string());
             }
     
@@ -93,7 +106,7 @@ pub async fn run_script(
 
     let stderr_task: task::JoinHandle<Result<(), String>> = task::spawn(async move {
         while let Some(line) = stderr_rx.recv().await {
-            if cancel_token_stderr.is_cancelled() {
+            if stderr_halt_token.load(Ordering::SeqCst) {
                 return Err("Stderr was cancelled.".to_string());
             }
             println!("STDERR: {:#?}", line);
@@ -102,7 +115,7 @@ pub async fn run_script(
         Ok(())
     });
 
-
+    // Waiting For Tasks
     match tokio::try_join!(script_task, stdout_task, stderr_task) {
         Ok((res, _, _)) => res,
         Err(err) => {

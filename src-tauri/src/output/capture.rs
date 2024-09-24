@@ -2,6 +2,7 @@ use std::io::{Cursor, Write};
 use std::sync::{Arc, Mutex};
 use tokio::sync::mpsc::Sender;
 use duckscript::types::env::Env;
+use std::sync::atomic::AtomicBool;
 
 // Using arc + mutex, TODO: improve w/ performant and efficient handling instead of reference counting
 pub struct OutputCapture {
@@ -9,15 +10,17 @@ pub struct OutputCapture {
     stderr_buf: Arc<Mutex<Cursor<Vec<u8>>>>,
     stdout_tx: Sender<String>, // channel to send stdout
     stderr_tx: Sender<String>, // channel to send stderr
+    halt: Arc<AtomicBool>
 }
 
 impl OutputCapture {
-    pub fn new(stdout_tx: Sender<String>, stderr_tx: Sender<String>) -> Self {
+    pub fn new(stdout_tx: Sender<String>, stderr_tx: Sender<String>, halt: Option<Arc<AtomicBool>>) -> Self {
         Self {
             stdout_buf: Arc::new(Mutex::new(Cursor::new(Vec::new()))),
             stderr_buf: Arc::new(Mutex::new(Cursor::new(Vec::new()))),
             stdout_tx,
             stderr_tx,
+            halt: halt.unwrap_or_else(|| Arc::new(AtomicBool::new(false))),
         }
     }
 
@@ -25,6 +28,7 @@ impl OutputCapture {
         Env::new(
             Some(Box::new(ArcWriter(self.stdout_buf.clone(), self.stdout_tx.clone())) as Box<dyn Write>),
             Some(Box::new(ArcWriter(self.stderr_buf.clone(), self.stderr_tx.clone())) as Box<dyn Write>),
+            Some(self.halt.clone())
         )
     }
 
