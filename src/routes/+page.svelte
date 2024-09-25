@@ -9,7 +9,7 @@
   async function syncRepo() {
     syncStatus = "Syncing...";
     try {
-      await invoke("get_sync_status");
+      await invoke("try_sync_repo");
       syncStatus = "Sync successful!";
       recentActivity = [
         ...recentActivity,
