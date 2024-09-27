@@ -10,7 +10,10 @@
   async function syncRepo() {
     syncStatus = "Syncing...";
     try {
-      await invoke("try_sync_repo");
+
+      await invoke("try_sync_repo", {
+        appDataDir: appDataDirPath
+      });
       syncStatus = "Sync successful!";
       recentActivity = [
         ...recentActivity,
@@ -20,7 +23,7 @@
         },
       ];
     } catch (error) {
-      syncStatus = `Sync failed: ${error.message}`;
+      syncStatus = `Sync failed: ${error}`;
     }
   }
 
