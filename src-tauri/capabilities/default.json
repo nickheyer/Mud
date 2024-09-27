@@ -11,6 +11,7 @@
     "process:default",
     "core:event:allow-emit",
     "core:event:default",
-    "fs:default"
+    "fs:default",
+    "dialog:default"
   ]
 }

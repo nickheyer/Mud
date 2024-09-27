@@ -4,6 +4,7 @@
   import _ from "lodash";
 
   $: syncStatus = "Not synced";
+  $: appDataDirPath = "No AppData Storage Selected";
   $: recentActivity = [];
 
   async function syncRepo() {
@@ -13,10 +14,31 @@
       syncStatus = "Sync successful!";
       recentActivity = [
         ...recentActivity,
-        { time: new Date().toLocaleString(), message: "Repo synced" },
+        {
+          time: new Date().toLocaleString(),
+          message: "Repo synced"
+        },
       ];
     } catch (error) {
       syncStatus = `Sync failed: ${error.message}`;
+    }
+  }
+
+  async function chooseAppDataDir() {
+    syncStatus = "Migrating AppData Directory...";
+    try {
+      [appDataDirPath] = await invoke("select_appdata_path");
+      console.log(JSON.stringify({ newPath: appDataDirPath }, 4, 2));
+      syncStatus = "Awaiting Resync, Press Sync...";
+      recentActivity = [
+        ...recentActivity,
+        { 
+          time: new Date().toLocaleString(),
+          message: `AppData Directory Reconfigured: ${appDataDirPath}`
+        },
+      ];
+    } catch (error) {
+      syncStatus = `Configuration failed: ${error.message}`;
     }
   }
 
@@ -37,6 +59,11 @@
   <div class="sync-status">
     <p><strong>Sync Status:</strong> {syncStatus}</p>
     <button on:click={syncRepo}>Sync Now</button>
+  </div>
+
+  <div class="sync-status select-appdata-dir">
+    <p><strong>Appdata Path:</strong> {appDataDirPath}</p>
+    <button on:click={chooseAppDataDir}>Configure App Folder</button>
   </div>
 
   <div class="recent-activity">

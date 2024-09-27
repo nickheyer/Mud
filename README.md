@@ -1,5 +1,6 @@
 # Mud
-Mud aspires to be a community sourced mod management framework and application. Inherently compatible with any game or platform, Mud does it all.
+Mud aspires to be a community sourced mod management language, runtime, and desktop application. Inherently compatible with any game or platform, Mud does it all.
+
 ![logo](static/images/Mud_full_transparent_scaled_gw.png)
 
 
