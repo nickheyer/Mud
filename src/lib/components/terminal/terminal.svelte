@@ -13,12 +13,15 @@
     import { mud } from "./linting-rules/mud";
     import { setDiagnostics, forceLinting } from "@codemirror/lint";
     import { invoke, Channel } from "@tauri-apps/api/core";
+    import { emit } from '@tauri-apps/api/event';
     import { onMount } from "svelte";
     import dedent from "dedent";
 
     let editors = [];
     let results = [];
+    let numEditors = 0;
     let terminalContainer;
+    let isRunningCode = false;
 
     const initComment = dedent`
     goto :motd
@@ -32,12 +35,13 @@
      ██║ ╚═╝ ██║╚██████╔╝██████╔╝
      ╚═╝     ╚═╝ ╚═════╝ ╚═════╝ 
 
-    ▌▛▖ 🡆 Press **Ctrl + Space** to unveil the arsenal of 
-    ▌▛▖ commands in the standard library. Let the autocomplete
-    ▌▛▖ guide you through the digital fog.
+    ▌▛▖ 🡆 Ready to Try it out?
+    ▌▛▖ **Ctrl + Space** to see what you can do.
+    ▌▛▖ **Shift + Enter** to run it.
+    ▌▛▖ **Control + C** to kill it.
+    ▌▛▖ **Shift + Control + C** to create a new editor.
+    ▌▛▖ **Shift + Up/Down Arrow** swap content with past editor.
 
-    ▌▛▖ 🡆 Ready to execute your script? Hit **Shift + Enter**
-    ▌▛▖ to run it in this terminal and see the code come alive.
 
     ▌▛▖ Good luck, hacker.
 
@@ -129,6 +133,18 @@
         editor.dispatch({
             changes: { from: currentDoc.length, insert: newText },
         });
+        scrollToEditor(editor);
+    }
+
+    function replaceInEditor(editor, otherEditor) {
+        const currentDoc = editor.state.doc.toString();
+        const prevDoc = otherEditor.state.doc.toString();
+
+        // Dispatch the new state to append the text
+        editor.dispatch({
+            changes: { from: 0, to: currentDoc.length, insert: prevDoc },
+        });
+        scrollToEditor(editor);
     }
 
     /**
@@ -146,7 +162,6 @@
                 appendToEditor(resEditor, stdoutText);
             }
         };
-
     }
 
     /**
@@ -178,6 +193,7 @@
         // Create editor for next command
         const newEditor = createEditor();
         editors.push(newEditor);
+        numEditors = editors.length;
 
         // Append new editor and scroll into view
         terminalContainer.appendChild(newEditor.editor.dom);
@@ -194,6 +210,7 @@
 
         let resultEditor = null;
         const onEvent = new Channel();
+        isRunningCode = true;
 
 
         // Let the command run in background with it's callback.
@@ -218,6 +235,7 @@
         });
 
         // Prepare for the next input
+        isRunningCode = false;
         await dispatchAndRotateToNewEditor(editorObj);
     }
 
@@ -235,11 +253,38 @@
      * Handle Shift + Enter key combination to run the script.
      * @param {KeyboardEvent} event - The keyboard event object.
      */
-    function handleKeyDown(event) {
+    async function handleKeyDown(event) {
         if (event.key === "Enter" && event.shiftKey) {
             event.preventDefault();
             const currentEditor = editors[editors.length - 1]; // Get the last editor
-            runCode(currentEditor);
+            await runCode(currentEditor);
+        } else if (event.ctrlKey && event.code == 'KeyC' && (event.shiftKey || isRunningCode)) {
+            event.preventDefault();
+            const currentEditor = editors[editors.length - 1];
+            if (isRunningCode) {
+                await createError({ message: 'Script terminated with Control-C' });
+                await emit('page-nav', {});
+            }
+            if (event.shiftKey) {
+                await dispatchAndRotateToNewEditor(currentEditor);
+            }
+        } else if (
+            event.shiftKey &&
+            (
+                event.key == 'ArrowUp' && numEditors > 1 ||
+                event.key == 'ArrowDown' && numEditors < editors.length
+            ) &&
+            !isRunningCode
+        ) {
+            event.preventDefault();
+            const currentEditor = editors[editors.length - 1];
+            if (event.key == 'ArrowUp') {
+                numEditors -= 1;
+            } else {
+                numEditors += 1;
+            }
+            const targetEditor = editors[numEditors - 1];
+            replaceInEditor(currentEditor.editor, targetEditor.editor);
         }
     }
 
