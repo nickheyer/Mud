@@ -1,11 +1,11 @@
-use std::path::{PathBuf, Path};
+use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 use tauri_plugin_dialog::{DialogExt, FilePath};
 use git2::Repository;
 use tokio::fs::{remove_dir_all, create_dir};
 
 static COMMUNITY_REPO_URL: &str = "https://github.com/nickheyer/Mud.Community.git";
-static COMMUNITY_REPO_ROOT_DIR: &str = "/mudCommunity";
+static COMMUNITY_REPO_PATH: &str = "git";
 
 #[tauri::command]
 pub async fn get_sync_status() -> Result<bool, ()> {
@@ -14,29 +14,36 @@ pub async fn get_sync_status() -> Result<bool, ()> {
 
 #[tauri::command]
 pub async fn try_sync_repo(app_data_dir: PathBuf) -> Result<bool, ()> {
-    let is_target_ws = check_if_git(&app_data_dir);
+    let repo_path = app_data_dir.join(&COMMUNITY_REPO_PATH);
+    let is_target_ws = check_if_git(&repo_path);
     if is_target_ws {
-        println!("{:#?} is an existing git workspace - attempting to clone repo from {:#?}",
-            app_data_dir,
+        println!("{:#?} is an existing git workspace - attempting to sync repo from {:#?}",
+            repo_path,
             &COMMUNITY_REPO_URL
         );
-        match pull_repo_updates(&app_data_dir) {
-            Ok(_) => Ok(true),
+        match pull_repo_updates(&repo_path) {
+            Ok(_) => {
+                println!("Successfully synced existing local repo to community repo.");
+                Ok(true)
+            },
             Err(e) => {
                 eprintln!("Failed to pull updates: {}", e);
-                return Ok(false);
+                Ok(false)
             },
         }
     } else {
         println!("{:#?} is not an existing git workspace - attempting to clone repo from {:#?}",
-            app_data_dir,
+            repo_path,
             &COMMUNITY_REPO_URL
         );
-        match clone_repo(&COMMUNITY_REPO_URL, &app_data_dir).await {
-            Ok(_) => Ok(true),
+        match clone_repo(&COMMUNITY_REPO_URL, &repo_path).await {
+            Ok(_) => {
+                println!("Successfully cloned community repo from github.");
+                Ok(true)
+            },
             Err(e) => {
                 eprintln!("Failed to initialize local repo: {}", e);
-                return Ok(false);
+                Ok(false)
             },
         }
     }
@@ -61,15 +68,22 @@ pub async fn select_appdata_path(handle: AppHandle) -> Result<Vec<FilePath>, tau
 }
 
 pub fn check_if_git(local_path: &PathBuf) -> bool {
-    let repo_path = local_path.join(&COMMUNITY_REPO_ROOT_DIR);
-    let repo = match Repository::open(&repo_path) {
+    println!("REPO PATH: {:#?}", local_path);
+    let repo = match Repository::open(&local_path) {
         Ok(r) => r,
-        Err(_) => return false // Not a git workspace
+        Err(err) => {
+            eprintln!("{:#?}", err);
+            return false // Not a git workspace
+        }
     };
+    println!("REPO OPENED: {:#?}", repo.state());
 
     let remote = match repo.is_empty() {
         Ok(ans) => !ans,
-        Err(_) => false // Not a git workspace
+        Err(err) => {
+            eprintln!("{:#?}", err);
+            return false // Not a git workspace
+        }
     };
 
     remote
@@ -110,30 +124,29 @@ pub async fn clone_repo(repo_url: &str, repo_path: &PathBuf) -> Result<(), git2:
     }
 }
 
+pub fn find_last_commit(repo: &Repository) -> Result<git2::Commit, git2::Error> {
+    let obj = repo.head()?.resolve()?.peel(git2::ObjectType::Commit)?;
+    match obj.into_commit() {
+        Ok(c) => Ok(c),
+        _ => Err(git2::Error::new(
+            git2::ErrorCode::NotFound,
+            git2::ErrorClass::Object,
+            "commit error"
+        )),
+    }
+}
+
 fn pull_repo_updates(local_path: &PathBuf) -> Result<(), git2::Error> {
     let repo = Repository::open(local_path)?;
-    let mut remote = repo.find_remote("origin")?;
-    
-    // Fetch repo
-    remote.fetch(&["main"], None, None)?;
+    let commit = find_last_commit(&repo)?;
+    let obj = commit.into_object();
+    let mut checkout_builder = git2::build::CheckoutBuilder::new();
 
-    // Get latest
-    let fetch_head = repo.find_reference("FETCH_HEAD")?;
-    let fetch_commit = repo.reference_to_annotated_commit(&fetch_head)?;
-
-    // Merge commits
-    let analysis = repo.merge_analysis(&[&fetch_commit])?;
-    if analysis.0.is_fast_forward() {
-        let mut reference = repo.find_reference("refs/heads/main")?;
-        reference
-            .set_target(fetch_commit.id(), "Fast-forward")?;
-        repo
-            .set_head("refs/heads/main")?;
-        repo
-            .checkout_head(Some(git2::build::CheckoutBuilder::default().force()))?;
-        println!("Repository updated successfully!");
-    } else {
-        println!("No fast-forward possible. Manual merge required.");
-    }
-    Ok(())
+    // Hard Reset
+    let reset = repo.reset(
+        &obj,
+        git2::ResetType::Hard,
+        Some(checkout_builder.force())
+    );
+    reset
 }
