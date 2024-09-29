@@ -27,6 +27,7 @@ regex = "1.10.6"
 tokio-util = "0.7.12"
 tauri-plugin-fs = { version = "2.0.0-rc" }
 tauri-plugin-dialog = "2.0.0-rc"
+tauri-plugin-store = "2.0.0-rc"
 
 
 
