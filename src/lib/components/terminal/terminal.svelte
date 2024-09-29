@@ -8,17 +8,20 @@
         DecorationSet,
     } from "@codemirror/view";
     import { StreamLanguage } from "@codemirror/language";
-    import { indentWithTab } from "@codemirror/commands";
+    import { insertTab, indentLess } from "@codemirror/commands";
+    import { indentationMarkers } from '@replit/codemirror-indentation-markers';
     import { mud } from "./linting-rules/mud";
     import { setDiagnostics, forceLinting } from "@codemirror/lint";
     import { invoke, Channel } from "@tauri-apps/api/core";
     import { onMount } from "svelte";
+    import dedent from "dedent";
 
     let editors = [];
     let results = [];
     let terminalContainer;
 
-    const initComment = `goto :motd
+    const initComment = dedent`
+    goto :motd
     ─────────────╾⧗ WELCOME TO THE MUD TERMINAL ⧗╼─────────────
 
      Welcome to
@@ -38,8 +41,9 @@
 
     ▌▛▖ Good luck, hacker.
 
-    ────────────────────────────────────────────────────────────\n:motd
-    \n\n`;
+    ────────────────────────────────────────────────────────────
+    :motd\n\n
+    `;
 
     // State effect to add an underline effect
     const addUnderlineEffect = StateEffect.define();
@@ -76,6 +80,8 @@
         });
     }
 
+    const indentWithTab = { key: "Tab", run: insertTab, shift: indentLess };
+
     /**
      * Create a new editor instance and focus it.
      * @param {boolean} readOnly - Whether the editor should be read-only.
@@ -83,15 +89,26 @@
      */
     function createEditor(readOnly = false) {
         const editable = new Compartment();
+        const textInit = readOnly || editors.length > 0 ? "" : initComment;
         const editor = new EditorView({
-            doc: readOnly || editors.length > 0 ? "" : initComment,
+            doc: textInit,
             extensions: [
                 basicSetup,
                 keymap.of([indentWithTab]),
                 StreamLanguage.define(mud),
                 editable.of(EditorView.editable.of(!readOnly)),
                 underlineField,
+                indentationMarkers({
+                    thickness: 1,
+                    colors: {
+                        dark: '#2d054f99',
+                        light: '#2d054f99'
+                    }
+                })
             ],
+            selection: {
+                anchor: textInit.length
+            },
             parent: terminalContainer,
         });
 

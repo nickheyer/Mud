@@ -1,7 +1,6 @@
 use git2::Repository;
 use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
-use tauri::path::PathResolver;
 use tauri_plugin_dialog::{DialogExt, FilePath};
 use tokio::fs::{create_dir, remove_dir_all};
 
@@ -14,7 +13,7 @@ pub async fn get_sync_status() -> Result<bool, ()> {
 }
 
 #[tauri::command]
-pub async fn try_sync_repo(app_data_dir: PathBuf) -> Result<bool, ()> {
+pub async fn try_sync_repo(app_data_dir: PathBuf) -> bool {
     let repo_path = app_data_dir.join(&COMMUNITY_REPO_PATH);
     let is_target_ws = check_if_git(&repo_path);
     if is_target_ws {
@@ -25,11 +24,11 @@ pub async fn try_sync_repo(app_data_dir: PathBuf) -> Result<bool, ()> {
         match pull_repo_updates(&repo_path) {
             Ok(_) => {
                 println!("Successfully synced existing local repo to community repo.");
-                Ok(true)
+                true
             }
             Err(e) => {
                 eprintln!("Failed to pull updates: {}", e);
-                Ok(false)
+                false
             }
         }
     } else {
@@ -40,11 +39,11 @@ pub async fn try_sync_repo(app_data_dir: PathBuf) -> Result<bool, ()> {
         match clone_repo(&COMMUNITY_REPO_URL, &repo_path).await {
             Ok(_) => {
                 println!("Successfully cloned community repo from github.");
-                Ok(true)
+                true
             }
             Err(e) => {
                 eprintln!("Failed to initialize local repo: {}", e);
-                Ok(false)
+                false
             }
         }
     }
@@ -59,11 +58,11 @@ pub async fn get_appdata_path(handle: AppHandle) -> Result<PathBuf, tauri::Error
 }
 
 #[tauri::command]
-pub async fn select_appdata_path(handle: AppHandle) -> Result<Vec<FilePath>, tauri::Error> {
-    let req_app_data_dir = handle.dialog().file().blocking_pick_folders();
+pub async fn select_appdata_path(handle: AppHandle) -> Result<FilePath, tauri::Error> {
+    let req_app_data_dir = handle.dialog().file().blocking_pick_folder();
     let local_app_data_dir = handle.path().app_local_data_dir()?;
 
-    let resolved_path = req_app_data_dir.unwrap_or(vec![FilePath::from(local_app_data_dir)]);
+    let resolved_path = req_app_data_dir.unwrap_or(FilePath::from(local_app_data_dir));
     println!("{:#?}", resolved_path);
     Ok(resolved_path)
 }
@@ -146,6 +145,5 @@ fn pull_repo_updates(local_path: &PathBuf) -> Result<(), git2::Error> {
     let mut checkout_builder = git2::build::CheckoutBuilder::new();
 
     // Hard Reset
-    let reset = repo.reset(&obj, git2::ResetType::Hard, Some(checkout_builder.force()));
-    reset
+    repo.reset(&obj, git2::ResetType::Hard, Some(checkout_builder.force()))
 }

@@ -47,7 +47,7 @@
     syncStatus = "Migrating AppData Directory...";
     await logActivity('Starting AppData migration process (User selection)');
     try {
-      [appDataDirPath] = await invoke("select_appdata_path");
+      appDataDirPath = await invoke("select_appdata_path");
       await store.set('app-data-custom', { 'value': appDataDirPath });
 
       syncStatus = "Awaiting Resync, Press Sync...";

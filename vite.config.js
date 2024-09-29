@@ -37,6 +37,10 @@ export default defineConfig(async () => ({
           '@codemirror/language': path.resolve(
             __dirname,
             './node_modules/@codemirror/language/dist/index.cjs'
+          ),
+          '@codemirror/commands': path.resolve(
+            __dirname,
+            './node_modules/@codemirror/commands/dist/index.cjs'
           )
         }
   }
