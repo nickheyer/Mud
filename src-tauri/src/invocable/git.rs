@@ -1,6 +1,7 @@
 use git2::Repository;
 use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
+use tauri::path::PathResolver;
 use tauri_plugin_dialog::{DialogExt, FilePath};
 use tokio::fs::{create_dir, remove_dir_all};
 
