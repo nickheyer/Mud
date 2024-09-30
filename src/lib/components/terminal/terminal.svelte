@@ -16,6 +16,11 @@
     import { emit } from '@tauri-apps/api/event';
     import { onMount } from "svelte";
     import dedent from "dedent";
+    import {
+        isPermissionGranted,
+        requestPermission,
+        sendNotification,
+    } from '@tauri-apps/plugin-notification';
 
     let editors = [];
     let results = [];
@@ -36,14 +41,14 @@
      ╚═╝     ╚═╝ ╚═════╝ ╚═════╝ 
 
     ▌▛▖ 🡆 Ready to Try it out?
-    ▌▛▖ **Ctrl + Space** to see what you can do.
-    ▌▛▖ **Shift + Enter** to run it.
-    ▌▛▖ **Control + C** to kill it.
-    ▌▛▖ **Shift + Control + C** to create a new editor.
-    ▌▛▖ **Shift + Up/Down Arrow** swap content with past editor.
+    ▌▛▖ **Ctrl + Space** shows you what you can do.
+    ▌▛▖ **Shift + Enter** runs it.
+    ▌▛▖ **Control + C** kills it.
+    ▌▛▖ **Shift + Control + C** creates a new editor.
+    ▌▛▖ **Shift + Up/Down Arrow** swaps content with other editor.
 
 
-    ▌▛▖ Good luck, hacker.
+    Good luck, hacker.
 
     ────────────────────────────────────────────────────────────
     :motd\n\n
@@ -139,8 +144,9 @@
     function replaceInEditor(editor, otherEditor) {
         const currentDoc = editor.state.doc.toString();
         const prevDoc = otherEditor.state.doc.toString();
-
-        // Dispatch the new state to append the text
+        //sendNotification({ title: 'Swapping Editor', body: prevDoc });
+        
+        // Dispatch the chosen editors text to replace current editor text
         editor.dispatch({
             changes: { from: 0, to: currentDoc.length, insert: prevDoc },
         });

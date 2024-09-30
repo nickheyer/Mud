@@ -1,6 +1,8 @@
 <script>
     import { exit } from "@tauri-apps/plugin-process";
     import { emit, listen } from '@tauri-apps/api/event';
+    import { forwardAll } from "$lib/utils/logging";
+    import { onMount } from "svelte";
     
     async function handleNav(event) {
         emit('page-nav', {});
@@ -10,6 +12,10 @@
         event.preventDefault();
         await exit(0);
     }
+
+    onMount(() => {
+        forwardAll();
+    });
 </script>
 
 <link rel="stylesheet" href="/css/global.css">

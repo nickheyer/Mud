@@ -1,107 +1,108 @@
 <script>
+  import Activity from "$lib/components/activity/activity.svelte";
   import { invoke } from "@tauri-apps/api/core";
-  import { Store } from '@tauri-apps/plugin-store';
-  import { appLocalDataDir } from '@tauri-apps/api/path';
+  import { logActivity } from "$lib/stores/activityStore";
+  import { Store } from "@tauri-apps/plugin-store";
+  import { appLocalDataDir } from "@tauri-apps/api/path";
   import { onMount } from "svelte";
   import _ from "lodash";
 
   let store;
-  $: syncStatus = "Not synced";
-  $: appDataDirPath = '';
-  $: recentActivity = [];
-  
-  async function logActivity(message, time = null) {
-    if (!message || !message.length) {
-      console.trace('Attempting to log activity without message!');
-      return;
-    }
+  let syncStatus = "Not synced";
+  let appDataDirPath = '';
+  let isSyncing = false;
+  let isSelectingDir = false;
 
-    recentActivity = [
-      ...recentActivity,
-      {
-        time: time || new Date().toLocaleString(),
-        message
+  async function updateSyncStatus(statusMessage, log = true) {
+      syncStatus = statusMessage;
+      if (log) {
+          await logActivity(statusMessage);
       }
-    ];
-
-    await store.set('activity', {
-      value: recentActivity
-    });
   }
 
+  // Syncs the repository
   async function syncRepo() {
-    syncStatus = "Syncing...";
-    try {
-      await invoke("try_sync_repo", {
-        appDataDir: appDataDirPath
-      });
-      syncStatus = "Sync successful!";
-      await logActivity(syncStatus);
-    } catch (error) {
-      syncStatus = `Sync failed: ${error}`;
-      await logActivity(syncStatus);
-    }
+      if (isSyncing) return; // Prevents double clicks
+      isSyncing = true;
+      await updateSyncStatus("Syncing...", false);
+
+      try {
+          await invoke("try_sync_repo", { appDataDir: appDataDirPath });
+          await updateSyncStatus("Sync successful!");
+      } catch (error) {
+          await updateSyncStatus(`Sync failed: ${error.message || error}`);
+      } finally {
+          isSyncing = false;
+      }
   }
 
   async function chooseAppDataDir() {
-    syncStatus = "Migrating AppData Directory...";
-    await logActivity('Starting AppData migration process (User selection)');
-    try {
-      appDataDirPath = await invoke("select_appdata_path");
-      await store.set('app-data-custom', { 'value': appDataDirPath });
+      if (isSelectingDir) return;
+      isSelectingDir = true;
+      await updateSyncStatus("Migrating AppData Directory...", false);
 
-      syncStatus = "Awaiting Resync, Press Sync...";
-      await logActivity(`AppData Directory Reconfigured: ${appDataDirPath}`);
-
-      await store.save();
-    } catch (error) {
-      syncStatus = `Configuration failed: ${error.message}`;
-      await logActivity(syncStatus);
-    }
+      try {
+          const selectedPath = await invoke("select_appdata_path");
+          appDataDirPath = selectedPath;
+          await store.set('app-data-custom', { value: appDataDirPath });
+          await updateSyncStatus(`AppData Directory Reconfigured, Awaiting Sync!`);
+          await store.save();
+      } catch (error) {
+          await updateSyncStatus(`Configuration failed: ${error.message}`);
+      } finally {
+          isSelectingDir = false;
+      }
   }
 
   onMount(async () => {
-    store = new Store('store.bin');
-    const appDataCustom = await store.get('app-data-custom');
-    appDataDirPath = appDataCustom?.value || await appLocalDataDir();
-
-    const isSynced = await invoke("get_sync_status");
-    syncStatus = isSynced ? "Synced" : "Not synced";
-
-    const activityStore = await store.get('activity');
-    recentActivity = activityStore?.value || [];
+      store = new Store('store.bin');
+      const appDataCustom = await store.get('app-data-custom');
+      appDataDirPath = appDataCustom?.value || await appLocalDataDir();
+      const isSynced = await invoke("get_sync_status");
+      syncStatus = isSynced ? "Synced" : "Not synced!";
   });
-
 </script>
 
-<link rel="stylesheet" href="/css/main.css">
 
+<link rel="stylesheet" href="/css/main.css">
 <div class="container">
   <img src="/images/Mud_simple_transparent_gw.svg" alt="Mud Logo" class="logo" />
 
   <h1>Sync Settings</h1>
 
+  <!-- Sync Status Section -->
   <div class="sync-status">
-    <p><strong>Sync Status:</strong> {syncStatus}</p>
-    <button on:click={syncRepo}>Sync Now</button>
+      <p><strong>Sync Status:</strong> {syncStatus}</p>
+      <button on:click={syncRepo} disabled={isSyncing}>
+          {#if isSyncing} Syncing... {/if}
+          {#if !isSyncing} Sync Now {/if}
+      </button>
   </div>
 
+  <!-- AppData Path Configuration -->
   <div class="sync-status select-appdata-dir">
-    <p><strong>Appdata Path:</strong> {appDataDirPath}</p>
-    <button on:click={chooseAppDataDir}>Configure App Folder</button>
+      <p><strong>Appdata Path:</strong> {appDataDirPath}</p>
+      <button on:click={chooseAppDataDir} disabled={isSelectingDir}>
+          {#if isSelectingDir} Selecting Directory... {/if}
+          {#if !isSelectingDir} Configure App Folder {/if}
+      </button>
   </div>
 
-  <div class="recent-activity">
-    <h2>Recent Activity</h2>
-    {#if recentActivity.length > 0}
-      <ul>
-        {#each recentActivity as activity}
-          <li>{activity.time}: {activity.message}</li>
-        {/each}
-      </ul>
-    {:else}
-      <p>No recent activity.</p>
-    {/if}
-  </div>
+  <!-- Recent Activity Component -->
+  <Activity />
 </div>
 
+<style>
+  .container {
+      padding: 20px;
+  }
+
+  .sync-status {
+      margin-bottom: 15px;
+  }
+
+  button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+  }
+</style>
