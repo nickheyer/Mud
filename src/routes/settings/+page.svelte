@@ -6,7 +6,26 @@
     import { appLocalDataDir } from "@tauri-apps/api/path";
     import { onMount } from "svelte";
     import _ from "lodash";
+    import { Button } from "$lib/components/ui/button";
 
+    import * as Form from "$lib/components/ui/form";
+    import { Input } from "$lib/components/ui/input";
+    import { formSchema } from "$lib/components/formgen/schema";
+    import {
+        superForm,
+    } from "sveltekit-superforms";
+    import { zodClient } from "sveltekit-superforms/adapters";
+    
+    export let data;
+    
+    const form = superForm(data, {
+        validators: zodClient(formSchema),
+    });
+    
+    const { form: formData, enhance } = form;
+    // https://www.shadcn-svelte.com/docs/components/form
+    
+    
     let store;
     let appDataDirPath = "";
     let isSelectingDir = false;
@@ -34,20 +53,34 @@
 </script>
 
 <link rel="stylesheet" href="/css/main.css" />
+
 <div class="container">
     <h1>Settings</h1>
+
+    <form method="GET" use:enhance>
+        <Form.Field {form} name="username">
+          <Form.Control let:attrs>
+            <Form.Label>Username</Form.Label>
+            <Input {...attrs} bind:value={$formData.username} />
+          </Form.Control>
+          <Form.Description>This is your public display name.</Form.Description>
+          <Form.FieldErrors />
+        </Form.Field>
+        <Form.Button>Submit</Form.Button>
+      </form>
+
 
     <!-- AppData Path Configuration -->
     <div class="sync-status select-appdata-dir">
         <p><strong>Appdata Path:</strong> {appDataDirPath}</p>
-        <button on:click={chooseAppDataDir} disabled={isSelectingDir}>
+        <Button on:click={chooseAppDataDir} disabled={isSelectingDir}>
             {#if isSelectingDir}
                 Selecting Directory...
             {/if}
             {#if !isSelectingDir}
                 Configure App Folder
             {/if}
-        </button>
+        </Button>
     </div>
 </div>
 

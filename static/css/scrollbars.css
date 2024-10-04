@@ -1,0 +1,31 @@
+/* Global styles for all scrollbars */
+::-webkit-scrollbar {
+    width: 8px !important; /* Set the width of the scrollbar */
+    height: 8px !important; /* Set the height of the scrollbar */
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #333 !important; /* Set the background color of the scrollbar track */
+    border-radius: 4px !important; /* Optional: rounded corners for the scrollbar track */
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background-color: #555 !important; /* Set the thumb (scroll handle) color */
+    border-radius: 4px !important; /* Optional: rounded corners for the scrollbar thumb */
+    border: 2px solid #333 !important; /* Optional: adds space around the thumb */
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #777 !important; /* Set the thumb color on hover */
+  }
+  
+  ::-webkit-scrollbar-corner {
+    background-color: #333 !important; /* Match the background color of the scrollbar track */
+  }
+  
+  /* For Firefox */
+  * {
+    scrollbar-width: thin !important; /* Set scrollbar width to thin */
+    scrollbar-color: #555 #333 !important; /* Thumb color followed by track color */
+  }
+  
