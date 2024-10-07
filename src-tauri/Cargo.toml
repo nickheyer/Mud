@@ -1,6 +1,6 @@
 [package]
 name = "mud"
-version = "0.1.0"
+version = "0.1.1"
 description = "A community sourced mod management language, runtime, and desktop application"
 authors = ["nickheyer"]
 edition = "2021"
@@ -16,7 +16,6 @@ tauri-build = { version = "2.0.0-rc", features = [] }
 git2 = "0.19.0"
 duckscript = { git = "https://github.com/nickheyer/duckscript", branch = "master" }
 duckscriptsdk = { git = "https://github.com/nickheyer/duckscript", branch = "master" }
-gag = "1.0.0"
 tauri = { version = "2.0.0-rc", features = [] }
 tauri-plugin-shell = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v2" }
 tauri-plugin-process = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v2" }
@@ -32,6 +31,3 @@ tauri-plugin-notification = "2.0.0-rc"
 tauri-plugin-log = "2.0.0-rc"
 tera = "1.20.0"
 thiserror = "1.0.64"
-
-
-
