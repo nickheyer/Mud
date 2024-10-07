@@ -1,3 +1,6 @@
+pub mod parser;
+pub mod forms;
+
 use duckscript::types::runtime::Context;
 
 // Helper function to set up context with arguments

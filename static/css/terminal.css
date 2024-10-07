@@ -27,7 +27,7 @@
     overflow-y: scroll;
     flex-direction: column;
     margin: 1rem auto 0 auto;
-    
+
 }
 
 #term-scroll-end {
@@ -58,7 +58,7 @@
 
 .cm-activeLine {
     background-color: transparent !important;
-    box-shadow: inset 7px 0 9px -7px rgba(0,0,0,0.4) !important;
+    box-shadow: inset 7px 0 9px -7px rgba(0, 0, 0, 0.4) !important;
 }
 
 .cm-focused {
@@ -71,7 +71,8 @@
 }
 
 .cm-line::selection {
-    color: #232323 !important; /* your text color */
+    color: #232323 !important;
+    /* your text color */
 }
 
 .cm-line::selection * {

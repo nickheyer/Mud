@@ -1,0 +1,21 @@
+<h1 class="text-2xl font-bold mb-4">{{ data.metadata.name | default(value="Form") }}</h1>
+<form class="space-y-4">
+    {% for setting in data.settings %}
+        <div class="flex flex-col">
+            <label for="{{ setting.key }}" class="mb-1 font-medium text-gray-700">{{ setting.label }}</label>
+            {% if setting.widget == "boolean" %}
+                <input type="checkbox" id="{{ setting.key }}" name="{{ setting.key }}" class="rounded border-gray-300 focus:ring-indigo-500" {% if setting.default %}checked{% endif %}>
+            {% elif setting.widget == "choice" %}
+                <select id="{{ setting.key }}" name="{{ setting.key }}" class="rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200">
+                    {% for option in setting.options %}
+                        <option value="{{ option }}" {% if option == setting.default %}selected{% endif %}>{{ option }}</option>
+                    {% endfor %}
+                </select>
+            {% elif setting.widget == "text" %}
+                <input type="text" id="{{ setting.key }}" name="{{ setting.key }}" value="{{ setting.default }}" class="rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200">
+            {% endif %}
+            <p class="text-sm text-gray-500 mt-1">{{ setting.description }}</p>
+        </div>
+    {% endfor %}
+    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-500 focus:ring focus:ring-indigo-200">Submit</button>
+</form>

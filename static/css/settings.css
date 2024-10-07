@@ -1,0 +1,119 @@
+:root {
+    font-family: "Inter", "Avenir", "Helvetica", "Arial", sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #f6f6f6;
+    background-color: #1e1e1e;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.settings-container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #121212;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.settings-title {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    color: #24c8db;
+    text-align: center;
+}
+
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-field {
+    margin-bottom: 15px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #f6f6f6;
+}
+
+.form-input, 
+.form-select {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #333;
+    border-radius: 5px;
+    background-color: #1e1e1e;
+    color: #f6f6f6;
+    transition: border-color 0.3s ease;
+}
+
+.form-input:focus, 
+.form-select:focus {
+    border-color: #24c8db;
+    outline: none;
+}
+
+.form-checkbox {
+    margin-top: 5px;
+    transform: scale(1.1);
+    cursor: pointer;
+}
+
+.form-description {
+    margin-top: 5px;
+    font-size: 0.9em;
+    color: #aaa;
+}
+
+.form-button {
+    background-color: #24c8db;
+    color: #ffffff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.form-button:hover {
+    background-color: #1a9caf;
+    transform: translateY(-2px);
+}
+
+.form-button:active {
+    background-color: #177e92;
+    transform: translateY(0);
+}
+
+.games-list {
+    list-style: none;
+    padding: 0;
+    color: #f6f6f6;
+}
+
+.games-list li {
+    background-color: #1e1e1e;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 5px;
+}
+
+@media (max-width: 600px) {
+    .settings-container {
+        padding: 15px;
+    }
+
+    .settings-title {
+        font-size: 1.5rem;
+    }
+}

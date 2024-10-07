@@ -1,11 +1,11 @@
 <script>
-  import Activity from "$lib/components/activity/activity.svelte";
+  //import Activity from "$lib/components/activity/activity.svelte";
 
-  import { loadActivity } from "$lib/stores/activityStore";
+  //import { loadActivity } from "$lib/stores/activityStore";
   import { onMount } from "svelte";
 
   onMount(async () => {
-        await loadActivity();
+        //await loadActivity();
   });
 
 </script>
@@ -18,6 +18,6 @@
   <h1>Welcome to Mud!</h1>
   <p>The multiplatform mod manager.</p>
 
-  <Activity />
+  <!-- <Activity /> -->
 </div>
 
