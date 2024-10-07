@@ -8,6 +8,7 @@ let store = new Store("store.bin");
 // Load activity from tauri store to component
 export async function loadActivity() {
     const activityStore = await store.get("activity");
+
     if (activityStore?.value) {
         recentActivity.set(activityStore.value);
     }

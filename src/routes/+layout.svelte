@@ -3,7 +3,7 @@ import { exit } from "@tauri-apps/plugin-process";
 import { emit, listen } from '@tauri-apps/api/event';
 import { forwardAll } from "$lib/utils/logging";
 import { onMount } from "svelte";
-import { Button } from "$lib/components/ui/button";
+
 
 async function handleNav(event) {
     emit('page-nav', {});

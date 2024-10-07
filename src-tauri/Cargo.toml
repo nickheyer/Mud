@@ -30,6 +30,8 @@ tauri-plugin-dialog = "2.0.0-rc"
 tauri-plugin-store = "2.0.0-rc"
 tauri-plugin-notification = "2.0.0-rc"
 tauri-plugin-log = "2.0.0-rc"
+tera = "1.20.0"
+thiserror = "1.0.64"
 
 
 

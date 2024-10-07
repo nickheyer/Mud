@@ -4,8 +4,8 @@ use tauri::{AppHandle, Manager};
 use tauri_plugin_dialog::{DialogExt, FilePath};
 use tokio::fs::{create_dir, remove_dir_all};
 
-static COMMUNITY_REPO_URL: &str = "https://github.com/nickheyer/Mud.Community.git";
-static COMMUNITY_REPO_PATH: &str = "git";
+pub static COMMUNITY_REPO_URL: &str = "https://github.com/nickheyer/Mud.Community.git";
+pub static COMMUNITY_REPO_PATH: &str = "git";
 
 #[tauri::command]
 pub async fn get_sync_status() -> Result<bool, ()> {
@@ -52,8 +52,6 @@ pub async fn try_sync_repo(app_data_dir: PathBuf) -> bool {
 #[tauri::command]
 pub async fn get_appdata_path(handle: AppHandle) -> Result<PathBuf, tauri::Error> {
     let local_app_data_dir = handle.path().app_local_data_dir()?;
-
-    println!("{:#?}", local_app_data_dir);
     Ok(local_app_data_dir)
 }
 
