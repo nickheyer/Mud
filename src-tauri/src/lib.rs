@@ -24,7 +24,8 @@ pub fn run() {
             invocable::run_script,
             invocable::get_all_commands,
             invocable::build_form_html,
-            invocable::build_form_json
+            invocable::build_form_json,
+            invocable::submit_form
         ])
         .run(tauri::generate_context!())
         .expect("error while running Tauri application");

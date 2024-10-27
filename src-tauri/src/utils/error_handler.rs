@@ -1,5 +1,6 @@
 use duckscript::types::error::ScriptError;
 use serde::Serialize;
+use tauri::Error as TauriError;
 
 #[derive(Serialize)]
 pub struct ScriptErrorResponse {
@@ -10,15 +11,21 @@ pub struct ScriptErrorResponse {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum AppError {
     #[error("Failed to read file: {0}")]
     Io(#[from] std::io::Error),
     #[error("File is not valid utf8: {0}")]
-    Utf8(#[from] std::string::FromUtf8Error)
+    Utf8(#[from] std::string::FromUtf8Error),
+    #[error("Store Error: {0}")]
+    StoreError(#[from] tauri_plugin_store::Error),
+    #[error("Parsing Error: {0}")]
+    ParsingError(String),
+    #[error("Tauri Error: {0}")]
+    Tauri(#[from] TauriError),
 }
 
 // we must also implement serde::Serialize
-impl serde::Serialize for Error {
+impl serde::Serialize for AppError {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
       S: serde::ser::Serializer,
