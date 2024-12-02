@@ -1,11 +1,11 @@
 import { writable } from "svelte/store";
-import { Store } from "@tauri-apps/plugin-store";
+import { LazyStore } from '@tauri-apps/plugin-store';
 
-// Create tauri & svelte store(s)
+// SVELTE + TAURI STORE
 export const recentActivity = writable([]);
-let store = new Store("store.bin");
+let store = new LazyStore("store.bin");
 
-// Load activity from tauri store to component
+// LOAD FROM TAURI STORE
 export async function loadActivity() {
     const activityStore = await store.get("activity");
 
@@ -14,6 +14,7 @@ export async function loadActivity() {
     }
 }
 
+// UPDATE ACTIVITY LOG IN SVELTE STORE
 export function logActivity(message, time = null) {
     if (!message || !message.length) {
         console.trace("Attempting to log activity without message!");
@@ -25,11 +26,10 @@ export function logActivity(message, time = null) {
         message,
     };
 
-    // Update the activity log in the writable store
     recentActivity.update((activities) => {
         const updatedActivities = [...activities, entry];
         
-        // Persist the updated activities to Tauri store
+        // RESET TAURI STORE TO SAME AS SVELTE
         store.set("activity", { value: updatedActivities });
         
         return updatedActivities;

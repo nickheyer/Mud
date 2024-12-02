@@ -1,7 +1,7 @@
 use serde_json::Value;
+use std::error::Error;
 use std::fs;
 use std::path::PathBuf;
-use std::error::Error;
 
 // Loads JSON file into a `serde_json::Value` struct.
 pub fn load_json(json_path: PathBuf) -> Result<Value, Box<dyn Error>> {

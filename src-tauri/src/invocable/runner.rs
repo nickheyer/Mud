@@ -2,7 +2,6 @@ use duckscript::runner;
 use duckscript::types::runtime::Context;
 use duckscriptsdk;
 
-use crate::context::setup_context_with_args;
 use crate::output::OutputCapture;
 use crate::utils::handle_script_error;
 use serde::Serialize;
@@ -30,11 +29,10 @@ pub enum PayloadEvent {
     _Finished { message: String },
 }
 
-#[tauri::command]
-pub async fn run_script(
+pub async fn exec_script(
     handle: AppHandle,
     script_content: String,
-    on_event: Channel<PayloadEvent>,
+    on_event: Option<Channel<PayloadEvent>>,
 ) -> Result<String, String> {
     println!("{:?}", script_content);
 
@@ -89,8 +87,10 @@ pub async fn run_script(
             }
 
             println!("STDOUT: {:#?}", line);
-            if let Err(err) = on_event.send(PayloadEvent::Stdout { message: line }) {
-                return Err(format!("Failed to send event: {:?}", err));
+            if let Some(ref event_handler) = on_event {
+                if let Err(err) = event_handler.send(PayloadEvent::Stdout { message: line }) {
+                    return Err(format!("Failed to send event: {:?}", err));
+                }
             }
         }
 
@@ -119,14 +119,25 @@ pub async fn run_script(
 }
 
 #[tauri::command]
-pub fn run_scriptfile(file_path: String, args: Vec<String>) -> Result<String, String> {
-    let mut context = Context::new();
-    duckscriptsdk::load(&mut context.commands).unwrap();
-    setup_context_with_args(&mut context, args);
+pub async fn run_script(
+    handle: AppHandle,
+    script_content: String,
+    on_event: Channel<PayloadEvent>,
+) -> Result<String, String> {
+    println!("SCRIPT CONTENT: {:#?}", script_content);
+    exec_script(handle, script_content, Some(on_event)).await
+}
 
-    runner::run_script_file(&file_path, context, None)
-        .map(|ctx| format!("{:?}", ctx.variables))
-        .map_err(|error| format!("Error running script: {:?}", error))
+#[tauri::command]
+pub async fn run_scriptfile(
+    file_path: String,
+    handle: AppHandle,
+    on_event: Channel<PayloadEvent>,
+) -> Result<String, String> {
+    let script_content = std::fs::read_to_string(&file_path)
+        .map_err(|e| format!("FAILED TO READ SCRIPT FILE: {:?}", e))?;
+    println!("FILE NAME: {:?}\nSCRIPT CONTENT: {:#?}", file_path, script_content);
+    exec_script(handle, script_content, Some(on_event)).await
 }
 
 #[tauri::command]

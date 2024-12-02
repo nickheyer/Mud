@@ -28,11 +28,11 @@ pub enum AppError {
 impl serde::Serialize for AppError {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-      S: serde::ser::Serializer,
+        S: serde::ser::Serializer,
     {
-      serializer.serialize_str(self.to_string().as_ref())
+        serializer.serialize_str(self.to_string().as_ref())
     }
-  }
+}
 
 /*
 Handle script errors and return a serialized JSON string.

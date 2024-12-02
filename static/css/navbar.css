@@ -54,6 +54,7 @@ nav ul li .link-button:hover {
     background: none;
     border: none;
     cursor: pointer;
+    display: flex;
 }
 
 button:not(.link-button) {

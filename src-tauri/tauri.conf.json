@@ -33,6 +33,30 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "cli": {
+      "args": [
+        {
+          "name": "run",
+          "index": 1,
+          "takesValue": true
+        },
+        {
+          "name": "file",
+          "short": "f",
+          "takesValue": true
+        },
+        {
+          "name": "str",
+          "short": "s",
+          "takesValue": true
+        },
+        {
+          "name": "quiet",
+          "short": "q"
+        }
+      ]
+    }
   }
-  
 }

@@ -39,6 +39,7 @@
     "fs:allow-write-text-file",
     "fs:scope-download-recursive",
     "fs:scope-resource-recursive",
+    "cli:default",
     {
       "identifier": "fs:scope-appdata-recursive",
       "allow": [

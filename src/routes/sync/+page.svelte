@@ -1,13 +1,13 @@
 <script>
-  //import Activity from "$lib/components/activity/activity.svelte";
+  import Activity from "$lib/components/activity/activity.svelte";
   import { invoke } from "@tauri-apps/api/core";
-  //import { logActivity } from "$lib/stores/activityStore";
-  //import { Store } from "@tauri-apps/plugin-store";
+  import { logActivity } from "$lib/stores/activityStore";
+  import { LazyStore } from '@tauri-apps/plugin-store';
   import { appLocalDataDir } from "@tauri-apps/api/path";
   import { onMount } from "svelte";
   import _ from "lodash";
 
-  //let store;
+  let store;
   let syncStatus = "Not synced";
   let appDataDirPath = '';
   let isSyncing = false;
@@ -16,7 +16,7 @@
   async function updateSyncStatus(statusMessage, log = true) {
       syncStatus = statusMessage;
       if (log) {
-          //await logActivity(statusMessage);
+          await logActivity(statusMessage);
       }
   }
 
@@ -44,9 +44,9 @@
       try {
           const selectedPath = await invoke("select_appdata_path");
           appDataDirPath = selectedPath;
-          //await store.set('app-data-custom', { value: appDataDirPath });
+          await store.set('app-data-custom', { value: appDataDirPath });
           await updateSyncStatus(`AppData Directory Reconfigured, Awaiting Sync!`);
-          //await store.save();
+          await store.save();
       } catch (error) {
           await updateSyncStatus(`Configuration failed: ${error.message}`);
       } finally {
@@ -55,8 +55,8 @@
   }
 
   onMount(async () => {
-      //store = new Store('store.bin');
-      //const appDataCustom = await store.get('app-data-custom');
+      store = new LazyStore('store.bin');
+      const appDataCustom = await store.get('app-data-custom');
       appDataDirPath = await appLocalDataDir();
       const isSynced = await invoke("get_sync_status");
       syncStatus = isSynced ? "Synced" : "Not synced!";
@@ -89,7 +89,7 @@
   </div>
 
   <!-- Recent Activity Component -->
-  <!-- <Activity /> -->
+  <Activity />
 </div>
 
 <style>

@@ -15,6 +15,7 @@
     import { invoke, Channel } from "@tauri-apps/api/core";
     import { emit } from '@tauri-apps/api/event';
     import { onMount } from "svelte";
+    import { page } from "$app/stores";
     import dedent from "dedent";
     import {
         isPermissionGranted,
@@ -27,8 +28,9 @@
     let numEditors = 0;
     let terminalContainer;
     let isRunningCode = false;
+    let cliScript = $page.state?.scriptContent;
 
-    const initComment = dedent`
+    const initComment = cliScript || dedent`
     goto :motd
     ─────────────╾⧗ WELCOME TO THE MUD TERMINAL ⧗╼─────────────
 
@@ -294,11 +296,17 @@
         }
     }
 
-    // Init the first editor on mount
-    onMount(() => {
+    async function handleCLIStart(editor) {
+        if (cliScript && cliScript.length > 0) {
+            await runCode(editor);
+        }
+    }
+
+    onMount(async () => {
         terminalContainer = document.getElementById("term-container");
         let firstEditor = createEditor();
         editors.push(firstEditor);
+        await handleCLIStart(firstEditor);
         window.addEventListener("keydown", handleKeyDown);
         return () => {
             window.removeEventListener("keydown", handleKeyDown);

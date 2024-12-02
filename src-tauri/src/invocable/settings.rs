@@ -1,24 +1,23 @@
-
-use std::path::PathBuf;
-use serde_json::json;
-use std::sync::Arc;
-use tauri_plugin_store::JsonValue;
-use tauri::{AppHandle, Manager, Wry};
-use tauri_plugin_store::StoreExt;
-use tauri_plugin_store::Store;
 use crate::context::{forms, parser};
 use crate::invocable::git::check_if_git;
 use crate::utils::error_handler::AppError;
+use serde_json::json;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
+use std::path::PathBuf;
+use std::sync::Arc;
+use tauri::{AppHandle, Manager, Wry};
+use tauri_plugin_store::JsonValue;
+use tauri_plugin_store::Store;
+use tauri_plugin_store::StoreExt;
 
 #[tauri::command]
 pub async fn build_form_html(app: AppHandle) -> Result<String, AppError> {
     let def_html = "Error: Unable to load form data\n";
     let form_path = "games/baldursGate3/config.json".to_string(); // stub
-    
+
     let store = app.store("store.bin")?;
-    
+
     let app_data_path = get_res_appdata_path(app, &store);
     let repo_path = app_data_path.join("git");
     let is_target_ws = check_if_git(&repo_path);
@@ -59,10 +58,9 @@ pub async fn build_form_json(app: AppHandle) -> Result<JsonValue, AppError> {
                     parsed_json = merge_form_data(parsed_json, existing_data);
                 }
                 Ok(parsed_json)
-            },
-            Err(_e) => Err(AppError::ParsingError(def_json.to_string()))
+            }
+            Err(_e) => Err(AppError::ParsingError(def_json.to_string())),
         }
-        
     } else {
         Err(AppError::ParsingError(def_json.to_string()))
     }
@@ -83,7 +81,9 @@ pub async fn submit_form(app: AppHandle, form_data: JsonValue) -> Result<(), App
         store.set(hash_key.to_string(), form_data);
         store.save()?
     } else {
-        return Err(AppError::ParsingError("Invalid form data format".to_string()));
+        return Err(AppError::ParsingError(
+            "Invalid form data format".to_string(),
+        ));
     }
     Ok(())
 }
@@ -91,10 +91,11 @@ pub async fn submit_form(app: AppHandle, form_data: JsonValue) -> Result<(), App
 fn get_res_appdata_path(app: AppHandle, store: &Arc<Store<Wry>>) -> PathBuf {
     let app_data_default = app.path().app_local_data_dir().unwrap();
 
-    let app_data_dir = store.get("app-data-custom")
+    let app_data_dir = store
+        .get("app-data-custom")
         .and_then(|s| s["value"].as_str().map(String::from))
         .unwrap_or_else(|| app_data_default.into_os_string().into_string().unwrap());
-    
+
     PathBuf::from(app_data_dir.replace("\"", ""))
 }
 
@@ -124,4 +125,3 @@ fn merge_form_data(mut form_json: JsonValue, existing_data: JsonValue) -> JsonVa
     }
     form_json
 }
-
