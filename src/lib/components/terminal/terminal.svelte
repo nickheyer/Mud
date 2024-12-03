@@ -11,17 +11,17 @@
     import { insertTab, indentLess } from "@codemirror/commands";
     import { indentationMarkers } from '@replit/codemirror-indentation-markers';
     import { mud } from "./linting-rules/mud";
-    import { setDiagnostics, forceLinting } from "@codemirror/lint";
+    //import { setDiagnostics, forceLinting } from "@codemirror/lint";
     import { invoke, Channel } from "@tauri-apps/api/core";
     import { emit } from '@tauri-apps/api/event';
     import { onMount } from "svelte";
     import { page } from "$app/stores";
     import dedent from "dedent";
-    import {
-        isPermissionGranted,
-        requestPermission,
-        sendNotification,
-    } from '@tauri-apps/plugin-notification';
+    // import {
+    //     isPermissionGranted,
+    //     requestPermission,
+    //     sendNotification,
+    // } from '@tauri-apps/plugin-notification';
 
     let editors = [];
     let results = [];

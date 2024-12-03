@@ -1,4 +1,5 @@
-import { warn, debug, trace, info, error  } from '@tauri-apps/plugin-log';
+//import { warn, debug, trace, info, error  } from '@tauri-apps/plugin-log';
+import { error  } from '@tauri-apps/plugin-log';
 
 function forwardConsole(
   fnName,
@@ -12,9 +13,9 @@ function forwardConsole(
 }
 
 export function forwardAll() {
-    forwardConsole('log', trace);
-    forwardConsole('debug', debug);
-    forwardConsole('info', info);
+    //forwardConsole('log', trace);
+    //forwardConsole('debug', debug);
+    //forwardConsole('info', info);
     //forwardConsole('warn', warn);
     forwardConsole('error', error);
 }

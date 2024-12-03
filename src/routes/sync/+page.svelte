@@ -5,7 +5,7 @@
   import { LazyStore } from '@tauri-apps/plugin-store';
   import { appLocalDataDir } from "@tauri-apps/api/path";
   import { onMount } from "svelte";
-  import _ from "lodash";
+  //import _ from "lodash";
 
   let store;
   let syncStatus = "Not synced";

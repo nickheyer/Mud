@@ -2,6 +2,7 @@ use crate::invocable::runner;
 use tauri_plugin_cli::Matches;
 use std::process;
 use std::sync::Mutex;
+use serde_json::Value;
 
 pub struct ScriptState(pub Mutex<Option<String>>);
 
@@ -11,44 +12,43 @@ pub fn get_cli_script(state: tauri::State<ScriptState>) -> Option<String> {
 }
 
 pub async fn handle_cli_execution(app: tauri::AppHandle, matches: Matches) -> Option<String> {
-    
-    let fallback = "echo \"NO VALID SCRIPT CONTENT PROVIDED\"".to_string();
-    let script_content = match (&matches.args.get("file"), &matches.args.get("str"), &matches.args.get("run")) {
-        (Some(file_arg), _, _) if file_arg.value.is_string() => {
-            std::fs::read_to_string(file_arg.value.as_str().unwrap())
-                .map_err(|e| format!("echo \"FAILED TO READ SCRIPT FILE: {}\"", e))
-                .unwrap()
+    let fallback = "echo \"NO VALID MUD PROVIDED\"".to_string();
+    let script_content = match (&matches.args.get("file"), &matches.args.get("code")) {
+        (Some(file_arg), _) if file_arg.value.is_string() => {
+            std::fs::read_to_string(file_arg.value.as_str().unwrap()).unwrap_or_else(|e| {
+                format!("echo \"FAILED TO READ FILE: {}\"", e)
+            })
         },
-        (_, Some(str_arg), _) if str_arg.value.is_string() => {
-            str_arg.value.as_str().unwrap().to_string()
+        (_, Some(code_arg)) if code_arg.value.is_string() => {
+            code_arg.value.as_str().unwrap().to_string()
         },
-        (_, _, Some(run_arg)) if run_arg.value.is_string() => {
-          std::fs::read_to_string(run_arg.value.as_str().unwrap())
-              .map_err(|e| format!("echo \"FAILED TO READ SCRIPT FILE: {}\"", e))
-              .unwrap()
-      },
-        _ =>  fallback
+        _ => fallback,
     };
 
-    let quiet = matches.args.get("quiet")
-        .and_then(|q| q.value.as_bool())
-        .unwrap_or(false);
-
-    if quiet {
-        handle_script_exec(app, script_content).await
-    } else {
-        Some(script_content)
+    if matches.args.get("display").and_then(|d| d.value.as_bool()).unwrap_or(false) {
+        // Return the script content in display mode
+        return Some(script_content);
     }
+
+    // Execute the script
+    handle_script_exec(app, script_content).await
 }
 
 async fn handle_script_exec(app: tauri::AppHandle, script_content: String) -> Option<String> {
     match runner::exec_script(app, script_content, None).await {
-        Ok(output) => {
-            println!("{:?}", output);
+        Ok(_output) => {
             process::exit(0);
         },
         Err(e) => {
-            eprintln!("ERROR: {}", e);
+            if let Ok(parsed) = serde_json::from_str::<Value>(&e) {
+                let message = parsed.get("message").and_then(|v| v.as_str()).unwrap_or("Unknown error");
+                let line = parsed.get("line").and_then(|v| v.as_i64()).unwrap_or(-1);
+                if line != -1 {
+                    eprintln!("Traceback (most recent call last):\n  Line {}: {}", line, message);
+                } else {
+                    eprintln!("Error: {}", message);
+                }
+            }
             process::exit(1);
         }
     }

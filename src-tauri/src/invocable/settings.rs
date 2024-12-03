@@ -31,8 +31,7 @@ pub async fn build_form_html(app: AppHandle) -> Result<String, AppError> {
 
     match json_object {
         Ok(json) => Ok(forms::generate_form_html(json, None).unwrap_or(def_html.to_string())),
-        Err(e) => {
-            println!("{:#?}", e);
+        Err(_e) => {
             Err(AppError::ParsingError(def_html.to_string()))
         }
     }
@@ -76,8 +75,7 @@ pub async fn submit_form(app: AppHandle, form_data: JsonValue) -> Result<(), App
     let config_path = repo_path.join(&form_path);
     let hash_key = hash_path(&config_path);
 
-    if let Some(map) = form_data.as_object() {
-        println!("Incoming Form Data: {:#?}", map);
+    if let Some(_map) = form_data.as_object() {
         store.set(hash_key.to_string(), form_data);
         store.save()?
     } else {

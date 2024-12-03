@@ -3,7 +3,7 @@
     import { onMount } from 'svelte';
     import { invoke } from "@tauri-apps/api/core";
     import { writable } from 'svelte/store';
-    import { get, set, isNil, merge } from 'lodash';
+    import { get, set, isNil } from 'lodash';
 
     // Reactive stores for form data
     const formJson = writable(null);

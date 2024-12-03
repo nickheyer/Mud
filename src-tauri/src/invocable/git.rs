@@ -17,10 +17,6 @@ pub async fn try_sync_repo(app_data_dir: PathBuf) -> bool {
     let repo_path = app_data_dir.join(&COMMUNITY_REPO_PATH);
     let is_target_ws = check_if_git(&repo_path);
     if is_target_ws {
-        println!(
-            "{:#?} is an existing git workspace - attempting to sync repo from {:#?}",
-            repo_path, &COMMUNITY_REPO_URL
-        );
         match pull_repo_updates(&repo_path) {
             Ok(_) => {
                 println!("Successfully synced existing local repo to community repo.");
@@ -66,7 +62,6 @@ pub async fn select_appdata_path(handle: AppHandle) -> Result<FilePath, tauri::E
 }
 
 pub fn check_if_git(local_path: &PathBuf) -> bool {
-    println!("REPO PATH: {:#?}", local_path);
     let repo = match Repository::open(&local_path) {
         Ok(r) => r,
         Err(err) => {
@@ -74,8 +69,6 @@ pub fn check_if_git(local_path: &PathBuf) -> bool {
             return false; // Not a git workspace
         }
     };
-    println!("REPO OPENED: {:#?}", repo.state());
-
     let remote = match repo.is_empty() {
         Ok(ans) => !ans,
         Err(err) => {

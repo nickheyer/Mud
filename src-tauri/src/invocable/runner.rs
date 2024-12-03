@@ -34,7 +34,6 @@ pub async fn exec_script(
     script_content: String,
     on_event: Option<Channel<PayloadEvent>>,
 ) -> Result<String, String> {
-    println!("{:?}", script_content);
 
     // Atomic booleans for quiting tasks prematurely
     let halt_flag = Arc::new(AtomicBool::new(false));
@@ -43,7 +42,6 @@ pub async fn exec_script(
     let stderr_halt_token = halt_flag.clone();
 
     handle.once_any("page-nav", move |_| {
-        println!("Killing tasks due to REPL exit / page navigation.");
         task_halt_token.store(true, Ordering::SeqCst);
     });
 
@@ -86,7 +84,6 @@ pub async fn exec_script(
                 return Err("Stdout was cancelled.".to_string());
             }
 
-            println!("STDOUT: {:#?}", line);
             if let Some(ref event_handler) = on_event {
                 if let Err(err) = event_handler.send(PayloadEvent::Stdout { message: line }) {
                     return Err(format!("Failed to send event: {:?}", err));
@@ -98,11 +95,10 @@ pub async fn exec_script(
     });
 
     let stderr_task: task::JoinHandle<Result<(), String>> = task::spawn(async move {
-        while let Some(line) = stderr_rx.recv().await {
+        while let Some(_line) = stderr_rx.recv().await {
             if stderr_halt_token.load(Ordering::SeqCst) {
                 return Err("Stderr was cancelled.".to_string());
             }
-            println!("STDERR: {:#?}", line);
         }
 
         Ok(())
@@ -112,7 +108,6 @@ pub async fn exec_script(
     match tokio::try_join!(script_task, stdout_task, stderr_task) {
         Ok((res, _, _)) => res,
         Err(err) => {
-            println!("Error in async task runtime: {:?}", err);
             Err(err.to_string())
         }
     }
@@ -124,7 +119,6 @@ pub async fn run_script(
     script_content: String,
     on_event: Channel<PayloadEvent>,
 ) -> Result<String, String> {
-    println!("SCRIPT CONTENT: {:#?}", script_content);
     exec_script(handle, script_content, Some(on_event)).await
 }
 
@@ -135,8 +129,7 @@ pub async fn run_scriptfile(
     on_event: Channel<PayloadEvent>,
 ) -> Result<String, String> {
     let script_content = std::fs::read_to_string(&file_path)
-        .map_err(|e| format!("FAILED TO READ SCRIPT FILE: {:?}", e))?;
-    println!("FILE NAME: {:?}\nSCRIPT CONTENT: {:#?}", file_path, script_content);
+        .map_err(|e| format!("FAILED TO READ FILE: {:?}", e))?;
     exec_script(handle, script_content, Some(on_event)).await
 }
 

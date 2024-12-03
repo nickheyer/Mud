@@ -38,23 +38,28 @@
     "cli": {
       "args": [
         {
-          "name": "run",
-          "index": 1,
-          "takesValue": true
-        },
-        {
           "name": "file",
-          "short": "f",
-          "takesValue": true
+          "index": 1,
+          "takesValue": true,
+          "description": "File path to execute. Overrides -c inline code."
         },
         {
-          "name": "str",
-          "short": "s",
-          "takesValue": true
+          "name": "code",
+          "short": "c",
+          "takesValue": true,
+          "description": "Inline code to execute instead of a file. Overriden by <file>"
         },
         {
-          "name": "quiet",
-          "short": "q"
+          "name": "display",
+          "short": "d",
+          "takesValue": false,
+          "description": "Executes code in GUI Mud App."
+        },
+        {
+          "name": "help",
+          "short": "h",
+          "takesValue": false,
+          "description": "Show this help message and exit."
         }
       ]
     }

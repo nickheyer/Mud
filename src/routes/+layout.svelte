@@ -1,6 +1,6 @@
 <script>
 import { exit } from "@tauri-apps/plugin-process";
-import { emit, listen } from '@tauri-apps/api/event';
+import { emit } from '@tauri-apps/api/event';
 import { forwardAll } from "$lib/utils/logging";
 import { onMount } from "svelte";
 

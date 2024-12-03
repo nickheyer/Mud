@@ -65,8 +65,11 @@ impl Write for ArcWriter {
 
         // Send the new data through the channel
         let output = String::from_utf8(buf.to_vec()).unwrap_or_default();
-        let _ = self.1.blocking_send(output); // Send it to the channel
 
+        print!("{}", output); // PRINT TO STDOUT
+
+        let _ = self.1.blocking_send(output); // SEND IT SENPAI
+        
         Ok(size)
     }
 
