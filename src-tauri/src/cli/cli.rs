@@ -19,14 +19,14 @@ pub async fn handle_cli_execution(app: tauri::AppHandle, matches: Matches) -> Op
                 .map_err(|e| format!("echo \"FAILED TO READ SCRIPT FILE: {}\"", e))
                 .unwrap()
         },
-        (_, _, Some(run_arg)) if run_arg.value.is_string() => {
-            std::fs::read_to_string(run_arg.value.as_str().unwrap())
-                .map_err(|e| format!("echo \"FAILED TO READ SCRIPT FILE: {}\"", e))
-                .unwrap()
-        },
         (_, Some(str_arg), _) if str_arg.value.is_string() => {
             str_arg.value.as_str().unwrap().to_string()
         },
+        (_, _, Some(run_arg)) if run_arg.value.is_string() => {
+          std::fs::read_to_string(run_arg.value.as_str().unwrap())
+              .map_err(|e| format!("echo \"FAILED TO READ SCRIPT FILE: {}\"", e))
+              .unwrap()
+      },
         _ =>  fallback
     };
 
