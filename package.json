@@ -12,7 +12,8 @@
     "tauri": "tauri",
     "dev-build": "rm -rf \"~/.cache/mud\" && NO_STRIP=true tauri build",
     "start": "rm -rf \"~/.cache/mud\" && tauri dev",
-    "clean": "mv ~/.local/share/com.mud.app ./sandbox/mud-data-old && rm -rf ~/.local/share/com.mud.app"
+    "clean": "mv ~/.local/share/com.mud.app ./sandbox/mud-data-old && rm -rf ~/.local/share/com.mud.app",
+    "upgrade": "rm -rf ./src-tauri/target /bin/mud /usr/bin/mud && cd src-tauri && cargo clean && cargo build --release && cp ./target/release/mud /bin/mud && chown -R 1000:1000 ../*"
   },
   "license": "MIT",
   "dependencies": {
